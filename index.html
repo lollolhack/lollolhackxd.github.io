@@ -286,6 +286,16 @@
             const systemPrompt = "You are a helpful and friendly AI assistant for the Koin app. Your purpose is to answer user questions about how the app works, its features, and the coin deposit process. Be concise and friendly.";
             const userQuery = userMessage;
 
+            // !! IMPORTANT: THIS IS YOUR API KEY FOR THE CHATBOT !!
+            // You can get a key from https://aistudio.google.com/
+            // Note: For a public site, a more secure method is recommended.
+            const apiKey = "AIzaSyDb89dfcMMo1q1oapiyjQLgzOlNSAXSaqc";
+            
+            if (!apiKey) {
+                console.error("API Key is missing. Please add your key to the apiKey variable.");
+                return "I'm sorry, the AI assistant is not configured. Please check the code for instructions.";
+            }
+
             const payload = {
                 contents: [{ parts: [{ text: userQuery }] }],
                 systemInstruction: {
@@ -293,18 +303,24 @@
                 },
             };
 
-            const apiKey = "";
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
 
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            const result = await response.json();
-            const candidate = result.candidates?.[0];
-            return candidate?.content?.parts?.[0]?.text || "I'm sorry, I am unable to answer that question right now. Please try again later.";
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const result = await response.json();
+                const candidate = result.candidates?.[0];
+                return candidate?.content?.parts?.[0]?.text || "I'm sorry, I was unable to get a response from the AI. Please try again.";
+            } catch (error) {
+                console.error("API call failed:", error);
+                return "I'm sorry, the AI service is currently unavailable. Please try again later.";
+            }
         };
 
         const handleChatMessage = async (userMessage) => {
