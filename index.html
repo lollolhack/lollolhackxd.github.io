@@ -12,22 +12,540 @@
         @media(min-width:640px){ .app-container{height:90vh;margin:2rem auto;} }
         .screen { display:none; flex-direction:column; padding:2.5rem 1.5rem; animation:fadeIn 0.5s forwards; position:relative; }
         .screen.active { display:flex; }
-        @keyframes fadeIn { from{opacity:0;transform:translateY(20px);} to{opacity:1;transform:translateY(0);} }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(20px);} to{opacity:1;transform:translateY(0);}}
         .animate-pop { animation:popIn 0.6s forwards; }
         @keyframes popIn {0%{transform:scale(0.8);opacity:0;}50%{transform:scale(1.1);opacity:1;}100%{transform:scale(1);}}
         .coin-icon { transition: transform 0.3s; font-size:2.5rem; }
         .coin-icon.pop { transform: scale(1.2); }
-        .ai-chat-modal { position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:50; opacity:0; pointer-events:none; transition:opacity 0.3s; }
-        .ai-chat-modal.visible { opacity:1; pointer-events:auto; }
-        .chat-box { background:white; border-radius:1.5rem; width:90%; max-width:400px; height:80vh; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1),0 10px 10px -5px rgba(0,0,0,0.04); }
+        .ai-chat-modal, .subscription-modal { position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:50; opacity:0; pointer-events:none; transition:opacity 0.3s; }
+        .ai-chat-modal.visible, .subscription-modal.visible { opacity:1; pointer-events:auto; }
+        .chat-box, .modal-box { background:white; border-radius:1.5rem; width:90%; max-width:400px; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1),0 10px 10px -5px rgba(0,0,0,0.04); }
+        .chat-box { height:80vh; }
         .chat-messages { flex-grow:1; overflow-y:auto; padding:1rem; display:flex; flex-direction:column; gap:0.75rem; }
         .chat-message { max-width:85%; padding:0.75rem 1rem; border-radius:1.25rem; line-height:1.4; }
         .chat-message.user { background:#3b82f6; color:white; align-self:flex-end; border-bottom-right-radius:0.25rem; }
         .chat-message.ai { background:#e5e7eb; color:#1f2937; align-self:flex-start; border-bottom-left-radius:0.25rem; }
+        #loading-screen { display: flex; align-items: center; justify-content: center; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: white; z-index: 100; transition: opacity 0.5s; }
+        .loader { width: 48px; height: 48px; border: 5px solid #E0E7FF; border-bottom-color: #4F46E5; border-radius: 50%; display: inline-block; box-sizing: border-box; animation: rotation 1s linear infinite; }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
+    <script type="module">
+        // Firebase SDK imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, setDoc, updateDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+
+        // Log everything to the console for debugging.
+        setLogLevel('debug');
+        
+        const KoinApp = (() => {
+            // --- Firebase Globals (Provided by Canvas Environment) ---
+            const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+            // --- App State and Element References ---
+            const appState = {
+                isAuthReady: false,
+                userId: null,
+                walletBalance: 0,
+                subscriptionStatus: 'Free Tier',
+                lastPaymentDate: null,
+                currentScreen: 0,
+                grossDeposit: 0,
+                serviceFee: 0,
+                netCredit: 0,
+                transactionId: '',
+                transactionTimestamp: null,
+                isCounting: false,
+                isAiTyping: false,
+                rareCoinFound: null
+            };
+            let coinCountingIntervalId = null;
+            let db;
+
+            const elements = {
+                loadingScreen: document.getElementById('loading-screen'),
+                screens: document.querySelectorAll('.screen'),
+                userIdDisplay: document.getElementById('user-id-display'),
+                walletBalanceDisplay: document.getElementById('wallet-balance'),
+                subscriptionStatusButton: document.getElementById('subscription-status-button'),
+                depositButton: document.getElementById('deposit-button'),
+                goToKiosksButton: document.getElementById('go-to-kiosks-button'),
+                scanButton: document.getElementById('scan-button'),
+                transferButton: document.getElementById('transfer-button'),
+                viewWalletButton: document.getElementById('view-wallet-button'),
+                backButton: document.getElementById('back-button'),
+                helpButton: document.getElementById('help-button'),
+                grossDisplay: document.getElementById('gross-display'),
+                statusMessage: document.getElementById('status-message'),
+                coinIcon: document.getElementById('coin-icon'),
+                grossDepositFinal: document.getElementById('gross-deposit-final'),
+                feePercentage: document.getElementById('fee-percentage'),
+                serviceFeeDisplay: document.getElementById('service-fee-display'),
+                netCreditDisplay: document.getElementById('net-credit-display'),
+                receiptGross: document.getElementById('receipt-gross'),
+                receiptFee: document.getElementById('receipt-fee'),
+                receiptNetCredit: document.getElementById('receipt-net-credit'),
+                receiptTxId: document.getElementById('receipt-tx-id'),
+                receiptTimestamp: document.getElementById('receipt-timestamp'),
+                aiChatModal: document.getElementById('ai-chat-modal'),
+                closeChatButton: document.getElementById('close-chat-button'),
+                chatInput: document.getElementById('chat-input'),
+                chatSendButton: document.getElementById('chat-send-button'),
+                chatMessages: document.getElementById('chat-messages'),
+                statusDisplayContainer: document.getElementById('status-display-container'),
+                aiTypingIndicator: document.getElementById('ai-typing-indicator'),
+                subscriptionModal: document.getElementById('subscription-modal'),
+                closeSubscriptionModalButton: document.getElementById('close-subscription-modal-button'),
+                freeTierButton: document.getElementById('free-tier-button'),
+                premiumTierButton: document.getElementById('premium-tier-button'),
+                rareCoinBonusDisplay: document.getElementById('rare-coin-bonus-display'),
+                rareCoinBonusRow: document.getElementById('rare-coin-bonus-row')
+            };
+
+            // Hardcoded list of rare coins and their values for the app demo
+            const rareCoins = [
+                { coinType: 'pennies', value: 0.01, rareValue: 50, name: '1909-S VDB Lincoln Cent' },
+                { coinType: 'nickels', value: 0.05, rareValue: 150, name: '1937-D Three-Legged Buffalo Nickel' },
+                { coinType: 'dimes', value: 0.10, rareValue: 100, name: '1916-D Mercury Dime' },
+                { coinType: 'quarters', value: 0.25, rareValue: 200, name: '1932-S Washington Quarter' },
+            ];
+            
+            // --- Firebase Initialization and Data Handling ---
+            const initializeFirebase = async () => {
+                if (!firebaseConfig) {
+                    console.error("Firebase config is missing. The app will not be able to use the database.");
+                    elements.loadingScreen.style.opacity = '0';
+                    elements.loadingScreen.style.pointerEvents = 'none';
+                    return;
+                }
+                
+                const app = window.firebaseApp || initializeApp(firebaseConfig);
+                window.firebaseApp = app;
+                const auth = getAuth(app);
+                db = getFirestore(app);
+
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        appState.userId = user.uid;
+                        console.log(`User authenticated with ID: ${appState.userId}`);
+                        elements.userIdDisplay.textContent = appState.userId;
+                        
+                        // Set up Firestore listener
+                        const userWalletRef = doc(db, 'artifacts', appId, 'users', appState.userId, 'wallet', 'data');
+                        
+                        onSnapshot(userWalletRef, (docSnap) => {
+                            if (docSnap.exists()) {
+                                const data = docSnap.data();
+                                appState.walletBalance = data.balance || 0;
+                                appState.subscriptionStatus = data.subscription || 'Free Tier';
+                                appState.lastPaymentDate = data.lastPaymentDate ? new Date(data.lastPaymentDate.toDate()) : null;
+                                updateWalletUI();
+                                console.log('Wallet data updated from Firestore:', data);
+                            } else {
+                                // Document does not exist, create it with initial values
+                                setDoc(userWalletRef, {
+                                    balance: 0,
+                                    subscription: 'Free Tier',
+                                    createdAt: new Date(),
+                                    lastPaymentDate: null
+                                }).then(() => {
+                                    console.log("Initial wallet data created for user.");
+                                }).catch(e => {
+                                    console.error("Error creating document: ", e);
+                                });
+                            }
+                            if (!appState.isAuthReady) {
+                                appState.isAuthReady = true;
+                                switchScreen(0);
+                                elements.loadingScreen.style.opacity = '0';
+                                elements.loadingScreen.style.pointerEvents = 'none';
+                            }
+                        }, (error) => {
+                            console.error("Error listening to wallet data:", error);
+                        });
+                    } else {
+                        console.log("No user signed in. Attempting sign-in.");
+                        try {
+                            if (initialAuthToken) {
+                                await signInWithCustomToken(auth, initialAuthToken);
+                            } else {
+                                await signInAnonymously(auth);
+                            }
+                        } catch (error) {
+                            console.error("Authentication failed: ", error);
+                            appState.isAuthReady = true;
+                            switchScreen(0);
+                            elements.loadingScreen.style.opacity = '0';
+                            elements.loadingScreen.style.pointerEvents = 'none';
+                        }
+                    }
+                });
+            };
+
+            const updateWalletInFirestore = async (newAmount, rareCoinDetails = null) => {
+                const userWalletRef = doc(db, 'artifacts', appId, 'users', appState.userId, 'wallet', 'data');
+                const transactionsColRef = collection(db, 'artifacts', appId, 'users', appState.userId, 'transactions');
+                
+                try {
+                    await updateDoc(userWalletRef, {
+                        balance: appState.walletBalance + newAmount
+                    });
+
+                    // Log the transaction
+                    await addDoc(transactionsColRef, {
+                        type: 'deposit',
+                        amount: newAmount,
+                        grossDeposit: appState.grossDeposit,
+                        serviceFee: appState.serviceFee,
+                        netCredit: appState.netCredit,
+                        timestamp: new Date(),
+                        rareCoinFound: rareCoinDetails !== null,
+                        rareCoinDetails: rareCoinDetails
+                    });
+                    
+                    console.log("Wallet and transaction updated successfully!");
+                } catch (e) {
+                    console.error("Error updating wallet or logging transaction: ", e);
+                }
+            };
+            
+            const handlePremiumPayment = async () => {
+                const userWalletRef = doc(db, 'artifacts', appId, 'users', appState.userId, 'wallet', 'data');
+                const now = new Date();
+                
+                // Check if a month has passed since the last payment
+                const oneMonthInMs = 30 * 24 * 60 * 60 * 1000;
+                const canPay = !appState.lastPaymentDate || (now.getTime() - appState.lastPaymentDate.getTime() >= oneMonthInMs);
+                
+                if (appState.walletBalance >= 1 && canPay) {
+                    try {
+                        await updateDoc(userWalletRef, {
+                            balance: appState.walletBalance - 1,
+                            subscription: 'Premium Tier',
+                            lastPaymentDate: now
+                        });
+                        appState.subscriptionStatus = 'Premium Tier';
+                        appState.lastPaymentDate = now;
+                        elements.subscriptionModal.classList.remove('visible');
+                        updateWalletUI();
+                        showMessage("Success! You're now a Premium member.", 'success');
+                    } catch (e) {
+                        console.error("Error processing premium payment: ", e);
+                        showMessage("Payment failed. Please try again.", 'error');
+                    }
+                } else if (!canPay) {
+                    showMessage("You have already paid for this month. Your subscription is active.", 'info');
+                } else {
+                    showMessage("Insufficient funds to upgrade to Premium. You need at least $1.00.", 'error');
+                }
+            };
+
+            const updateWalletUI = () => {
+                elements.walletBalanceDisplay.textContent = formatCurrency(appState.walletBalance);
+                elements.subscriptionStatusButton.textContent = appState.subscriptionStatus;
+                
+                const freeFee = 0.05; // 5% fee for Free Tier
+                const premiumFee = 0.02; // 2% fee for Premium Tier
+                
+                if (appState.subscriptionStatus === 'Free Tier') {
+                    appState.serviceFeeRate = freeFee;
+                    elements.feePercentage.textContent = '5%';
+                } else if (appState.subscriptionStatus === 'Premium Tier') {
+                    appState.serviceFeeRate = premiumFee;
+                    elements.feePercentage.textContent = '2%';
+                }
+            };
+            
+            // --- Core App Functions ---
+            const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+            const formatCurrency = (amount) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+            
+            const getCoinEmoji = (coinType) => {
+                switch (coinType) {
+                    case 'quarters': return '🪙';
+                    case 'dimes': return '💲';
+                    case 'nickels': return '✨';
+                    case 'pennies': return '💵';
+                    default: return '💰';
+                }
+            };
+
+            const showMessage = (message, type = 'info') => {
+                const modal = document.createElement('div');
+                modal.className = `fixed inset-0 flex items-center justify-center z-[100] p-4 bg-black bg-opacity-40 transition-opacity duration-300`;
+                modal.innerHTML = `
+                    <div class="bg-white rounded-xl shadow-2xl p-6 text-center max-w-sm w-full animate-pop">
+                        <p class="font-medium text-lg mb-4 text-gray-800">${message}</p>
+                        <button class="bg-indigo-600 text-white px-6 py-2 rounded-full font-semibold hover:bg-indigo-700 transition-colors" onclick="this.parentNode.parentNode.remove()">OK</button>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            };
+
+            const switchScreen = (screenNumber) => {
+                elements.screens.forEach(screen => screen.classList.remove('active'));
+                document.getElementById(`screen-${screenNumber}`).classList.add('active');
+                appState.currentScreen = screenNumber;
+                elements.backButton.classList.toggle('hidden', screenNumber === 0 || screenNumber === 1);
+            };
+
+            const updateDisplay = () => {
+                elements.grossDisplay.textContent = formatCurrency(appState.grossDeposit);
+                elements.grossDepositFinal.textContent = formatCurrency(appState.grossDeposit);
+                elements.serviceFeeDisplay.textContent = `-${formatCurrency(appState.serviceFee)}`;
+                elements.netCreditDisplay.textContent = formatCurrency(appState.netCredit);
+                
+                if (appState.rareCoinFound) {
+                    elements.rareCoinBonusDisplay.textContent = `+${formatCurrency(appState.rareCoinFound.rareValue)}`;
+                    elements.rareCoinBonusRow.classList.remove('hidden');
+                } else {
+                    elements.rareCoinBonusRow.classList.add('hidden');
+                }
+            };
+
+            const stopCoinCounting = () => {
+                if (coinCountingIntervalId) {
+                    clearInterval(coinCountingIntervalId);
+                    coinCountingIntervalId = null;
+                }
+            };
+
+            const simulateCoinCounting = () => {
+                stopCoinCounting();
+                
+                appState.isCounting = true;
+                appState.rareCoinFound = null; // Reset rare coin status
+                elements.transferButton.classList.add('hidden');
+                elements.statusDisplayContainer.classList.remove('hidden');
+                elements.statusMessage.textContent = "Start inserting coins.";
+
+                const coinValues = {
+                    'quarters': 0.25, 'dimes': 0.10, 'nickels': 0.05, 'pennies': 0.01
+                };
+                const coinTypes = Object.keys(coinValues);
+                const coinMix = {};
+                coinTypes.forEach(type => {
+                    coinMix[type] = getRandomInt(10, 30);
+                });
+
+                const allCoins = Object.entries(coinMix).flatMap(([type, count]) => Array(count).fill(type));
+                const shuffledCoins = allCoins.sort(() => Math.random() - 0.5);
+
+                let coinIndex = 0;
+
+                coinCountingIntervalId = setInterval(() => {
+                    if (coinIndex >= shuffledCoins.length) {
+                        stopCoinCounting();
+                        appState.isCounting = false;
+                        elements.statusMessage.textContent = "Transaction Ready!";
+                        elements.transferButton.classList.remove('hidden');
+                        return;
+                    }
+
+                    const coinType = shuffledCoins[coinIndex];
+                    let coinValue = coinValues[coinType];
+                    
+                    // Check for rare coin if premium subscription is active
+                    if (appState.subscriptionStatus === 'Premium Tier') {
+                        const isRare = Math.random() < 0.01; // 1% chance of finding a rare coin
+                        if (isRare) {
+                            const foundRareCoin = rareCoins.find(c => c.coinType === coinType);
+                            if (foundRareCoin) {
+                                appState.rareCoinFound = foundRareCoin;
+                                coinValue += foundRareCoin.rareValue;
+                                showMessage(`Congratulations! You found a rare ${foundRareCoin.name} worth ${formatCurrency(foundRareCoin.rareValue)}!`, 'success');
+                            }
+                        }
+                    }
+
+                    appState.grossDeposit += coinValue;
+                    appState.grossDeposit = parseFloat(appState.grossDeposit.toFixed(2));
+                    appState.serviceFee = parseFloat((appState.grossDeposit * appState.serviceFeeRate).toFixed(2));
+                    appState.netCredit = parseFloat((appState.grossDeposit - appState.serviceFee).toFixed(2));
+                    
+                    elements.coinIcon.textContent = getCoinEmoji(coinType);
+                    elements.coinIcon.classList.add('pop');
+                    setTimeout(() => elements.coinIcon.classList.remove('pop'), 200);
+
+                    updateDisplay();
+                    coinIndex++;
+                }, 100);
+            };
+
+            const resetTransaction = () => {
+                appState.grossDeposit = 0;
+                appState.serviceFee = 0;
+                appState.netCredit = 0;
+                appState.rareCoinFound = null;
+                updateDisplay();
+            };
+
+            // --- Event Listeners ---
+            const setupEventListeners = () => {
+                elements.depositButton.addEventListener('click', () => switchScreen(1));
+                elements.goToKiosksButton.addEventListener('click', () => switchScreen(1));
+                elements.scanButton.addEventListener('click', () => {
+                    resetTransaction();
+                    switchScreen(2);
+                    setTimeout(() => {
+                        elements.statusMessage.textContent = "Start inserting coins.";
+                        simulateCoinCounting();
+                    }, 2000);
+                });
+
+                elements.transferButton.addEventListener('click', async () => {
+                    stopCoinCounting();
+                    appState.transactionId = crypto.randomUUID().split('-').join('').toUpperCase().substring(0, 9);
+                    appState.transactionTimestamp = new Date();
+                    elements.receiptGross.textContent = formatCurrency(appState.grossDeposit);
+                    elements.receiptFee.textContent = `-${formatCurrency(appState.serviceFee)}`;
+                    elements.receiptNetCredit.textContent = formatCurrency(appState.netCredit);
+                    elements.receiptTxId.textContent = `#${appState.transactionId}`;
+                    elements.receiptTimestamp.textContent = appState.transactionTimestamp.toLocaleString();
+                    
+                    await updateWalletInFirestore(appState.netCredit, appState.rareCoinFound);
+
+                    switchScreen(3);
+                });
+
+                elements.viewWalletButton.addEventListener('click', () => {
+                    resetTransaction();
+                    switchScreen(0);
+                });
+
+                elements.backButton.addEventListener('click', () => {
+                    if (appState.currentScreen === 1) {
+                        switchScreen(0);
+                    } else if (appState.currentScreen === 2) {
+                        stopCoinCounting();
+                        resetTransaction();
+                        switchScreen(1);
+                    } else if (appState.currentScreen === 3) {
+                        switchScreen(2);
+                    }
+                });
+                
+                // Subscription modal listeners
+                elements.subscriptionStatusButton.addEventListener('click', () => {
+                    elements.subscriptionModal.classList.add('visible');
+                });
+                elements.closeSubscriptionModalButton.addEventListener('click', () => {
+                    elements.subscriptionModal.classList.remove('visible');
+                });
+                elements.freeTierButton.addEventListener('click', async () => {
+                    const userWalletRef = doc(db, 'artifacts', appId, 'users', appState.userId, 'wallet', 'data');
+                    try {
+                        await updateDoc(userWalletRef, { subscription: 'Free Tier' });
+                        elements.subscriptionModal.classList.remove('visible');
+                        showMessage("Subscription updated to Free Tier.", 'success');
+                    } catch (e) {
+                        console.error("Error setting subscription to Free Tier: ", e);
+                        showMessage("Failed to update subscription. Please try again.", 'error');
+                    }
+                });
+                elements.premiumTierButton.addEventListener('click', handlePremiumPayment);
+
+                // Chat listeners
+                elements.helpButton.addEventListener('click', () => elements.aiChatModal.classList.add('visible'));
+                elements.closeChatButton.addEventListener('click', () => elements.aiChatModal.classList.remove('visible'));
+
+                const sendChatMessage = () => {
+                    const message = elements.chatInput.value.trim();
+                    if (message) {
+                        addMessageToChat(message, 'user');
+                        elements.chatInput.value = '';
+                        handleChatMessage(message);
+                    }
+                };
+
+                elements.chatSendButton.addEventListener('click', sendChatMessage);
+                elements.chatInput.addEventListener('keypress', (event) => {
+                    if (event.key === 'Enter') {
+                        sendChatMessage();
+                    }
+                });
+            };
+
+            // --- AI Chat Logic ---
+            const callGeminiApi = async (userMessage) => {
+                const systemPrompt = "You are a helpful and friendly AI assistant for the Koin app. Your purpose is to answer user questions about how the app works, its features, and the coin deposit process. Be concise and friendly.";
+                const userQuery = userMessage;
+                const apiKey = ""; // <--- INSERT YOUR API KEY HERE
+
+                if (!apiKey) {
+                    console.error("API Key is missing. Please add your key to the apiKey variable.");
+                    return "I'm sorry, the AI assistant is not configured. Please check the code for instructions.";
+                }
+
+                const payload = {
+                    contents: [{ parts: [{ text: userQuery }] }],
+                    systemInstruction: {
+                        parts: [{ text: systemPrompt }]
+                    },
+                };
+
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    const result = await response.json();
+                    const candidate = result.candidates?.[0];
+                    return candidate?.content?.parts?.[0]?.text || "I'm sorry, I was unable to get a response from the AI. Please try again.";
+                } catch (error) {
+                    console.error("API call failed:", error);
+                    return "I'm sorry, the AI service is currently unavailable. Please try again later.";
+                }
+            };
+
+            const addMessageToChat = (message, sender) => {
+                const messageDiv = document.createElement('div');
+                messageDiv.textContent = message;
+                messageDiv.classList.add('chat-message', sender);
+                elements.chatMessages.appendChild(messageDiv);
+                elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
+            };
+
+            const showTypingIndicator = (show) => {
+                elements.aiTypingIndicator.classList.toggle('hidden', !show);
+                if (show) elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
+            };
+
+            const handleChatMessage = async (userMessage) => {
+                showTypingIndicator(true);
+                let aiResponse = "I'm sorry, something went wrong. Please try again.";
+                try {
+                    aiResponse = await callGeminiApi(userMessage);
+                } catch (error) {
+                    console.error("API call failed:", error);
+                } finally {
+                    showTypingIndicator(false);
+                    addMessageToChat(aiResponse, 'ai');
+                }
+            };
+            
+            // --- Initialization ---
+            initializeFirebase();
+            setupEventListeners();
+            
+            return {};
+        })();
+    </script>
 </head>
 <body>
 <div class="app-container">
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <span class="loader"></span>
+    </div>
+
     <!-- Header -->
     <header class="p-6 pb-0 flex justify-between items-center text-gray-400">
         <button id="back-button" class="hidden transition-transform hover:scale-110">
@@ -39,12 +557,26 @@
         <button id="help-button" class="transition-transform hover:scale-110">Need Help?</button>
     </header>
 
-    <!-- Screen 1 -->
-    <div id="screen-1" class="screen active flex-col items-center justify-center text-center space-y-10">
-        <div class="p-4 bg-indigo-50 rounded-full">
+    <!-- Screen 0: Wallet Home -->
+    <div id="screen-0" class="screen flex-col items-center justify-center text-center space-y-8">
+        <p class="text-sm font-medium text-gray-500">Your User ID</p>
+        <p id="user-id-display" class="font-mono text-xs text-gray-600 truncate w-full px-4"></p>
+        <div class="w-28 h-28 flex items-center justify-center bg-indigo-100 rounded-full animate-pop">
             <span class="text-indigo-600 text-6xl">$</span>
         </div>
-        <h1 class="text-4xl font-extrabold text-gray-900">Koin</h1>
+        <h2 class="text-5xl font-extrabold text-gray-900" id="wallet-balance">$0.00</h2>
+        <button id="subscription-status-button" class="text-lg text-gray-600 underline hover:text-indigo-600 transition-colors">Free Tier</button>
+        <button id="deposit-button" class="w-full px-6 py-4 bg-indigo-600 text-white font-semibold text-lg rounded-full shadow-lg hover:bg-indigo-700 transition-all transform hover:scale-105">
+            Deposit Coins
+        </button>
+        <button id="go-to-kiosks-button" class="w-full px-6 py-4 bg-gray-200 text-gray-800 font-semibold text-lg rounded-full shadow-lg hover:bg-gray-300 transition-all transform hover:scale-105">
+            Find Kiosks
+        </button>
+    </div>
+
+    <!-- Screen 1: Find Kiosks -->
+    <div id="screen-1" class="screen flex-col items-center justify-center text-center space-y-10">
+        <h1 class="text-4xl font-extrabold text-gray-900">Find Kiosks</h1>
         <p class="text-lg text-gray-600">Find a nearby Koin Kiosk</p>
         <iframe src="https://storage.googleapis.com/maps-solutions-2fxrm56wcn/locator-plus/kbwo/locator-plus.html" class="rounded-2xl shadow-md border-2 border-indigo-200 w-full h-80" style="border:0;"></iframe>
         <button id="scan-button" class="w-full px-6 py-4 bg-indigo-600 text-white font-semibold text-lg rounded-full shadow-lg hover:bg-indigo-700 transition-all transform hover:scale-105">
@@ -52,7 +584,7 @@
         </button>
     </div>
 
-    <!-- Screen 2 -->
+    <!-- Screen 2: Coin Counting -->
     <div id="screen-2" class="screen flex-col items-center justify-center text-center space-y-8">
         <div id="status-display-container" class="flex flex-col items-center space-y-4">
             <div id="counting-animation-container" class="relative w-40 h-40 flex items-center justify-center">
@@ -67,8 +599,11 @@
             <div class="flex justify-between items-center text-sm text-gray-600">
                 <span>Gross Deposit:</span><span id="gross-deposit-final" class="font-medium text-gray-800">$0.00</span>
             </div>
+            <div id="rare-coin-bonus-row" class="flex justify-between items-center text-sm text-green-500 hidden">
+                <span>Rare Coin Bonus:</span><span id="rare-coin-bonus-display" class="font-medium">+$0.00</span>
+            </div>
             <div class="flex justify-between items-center text-sm text-red-500">
-                <span>Service Fee (5%):</span><span id="service-fee-display" class="font-medium">-$0.00</span>
+                <span>Service Fee (<span id="fee-percentage">5%</span>):</span><span id="service-fee-display" class="font-medium">-$0.00</span>
             </div>
             <div class="flex justify-between items-center text-xl font-bold text-gray-900 pt-4 border-t border-gray-200">
                 <span>Net Credit:</span><span id="net-credit-display" class="text-indigo-600">$0.00</span>
@@ -79,7 +614,7 @@
         </button>
     </div>
 
-    <!-- Screen 3 -->
+    <!-- Screen 3: Transfer Complete -->
     <div id="screen-3" class="screen flex-col items-center justify-center text-center space-y-8">
         <div id="checkmark-container" class="w-24 h-24 flex items-center justify-center bg-green-500 rounded-full animate-pop">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-16 h-16 text-white">
@@ -124,291 +659,28 @@
     </div>
 </div>
 
-<script>
-    const KoinApp = (() => {
-        // --- State and Element References ---
-        const appState = {
-            currentScreen: 1,
-            grossDeposit: 0,
-            serviceFee: 0,
-            netCredit: 0,
-            transactionId: '',
-            transactionTimestamp: null,
-            isCounting: false,
-            lastCoinCount: 0,
-            isChatOpen: false,
-            isAiTyping: false
-        };
-        let coinCountingIntervalId = null;
-
-        const elements = {
-            screens: document.querySelectorAll('.screen'),
-            scanButton: document.getElementById('scan-button'),
-            transferButton: document.getElementById('transfer-button'),
-            viewWalletButton: document.getElementById('view-wallet-button'),
-            backButton: document.getElementById('back-button'),
-            helpButton: document.getElementById('help-button'),
-            grossDisplay: document.getElementById('gross-display'),
-            statusMessage: document.getElementById('status-message'),
-            coinIcon: document.getElementById('coin-icon'),
-            grossDepositFinal: document.getElementById('gross-deposit-final'),
-            serviceFeeDisplay: document.getElementById('service-fee-display'),
-            netCreditDisplay: document.getElementById('net-credit-display'),
-            receiptGross: document.getElementById('receipt-gross'),
-            receiptFee: document.getElementById('receipt-fee'),
-            receiptNetCredit: document.getElementById('receipt-net-credit'),
-            receiptTxId: document.getElementById('receipt-tx-id'),
-            receiptTimestamp: document.getElementById('receipt-timestamp'),
-            aiChatModal: document.getElementById('ai-chat-modal'),
-            closeChatButton: document.getElementById('close-chat-button'),
-            chatInput: document.getElementById('chat-input'),
-            chatSendButton: document.getElementById('chat-send-button'),
-            chatMessages: document.getElementById('chat-messages'),
-            statusDisplayContainer: document.getElementById('status-display-container'),
-            aiTypingIndicator: document.getElementById('ai-typing-indicator')
-        };
-        
-        // --- Core Functions ---
-        const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-
-        const getCoinEmoji = (coinType) => {
-            switch (coinType) {
-                case 'quarters': return '🪙';
-                case 'dimes': return '💲';
-                case 'nickels': return '✨';
-                case 'pennies': return '💵';
-                default: return '💰';
-            }
-        };
-
-        const formatCurrency = (amount) => {
-            return new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: 'USD'
-            }).format(amount);
-        };
-
-        const switchScreen = (screenNumber) => {
-            elements.screens.forEach(screen => screen.classList.remove('active'));
-            document.getElementById(`screen-${screenNumber}`).classList.add('active');
-            appState.currentScreen = screenNumber;
-            elements.backButton.classList.toggle('hidden', screenNumber === 1);
-        };
-
-        const updateDisplay = () => {
-            elements.grossDisplay.textContent = formatCurrency(appState.grossDeposit);
-            elements.grossDepositFinal.textContent = formatCurrency(appState.grossDeposit);
-            elements.serviceFeeDisplay.textContent = `-${formatCurrency(appState.serviceFee)}`;
-            elements.netCreditDisplay.textContent = formatCurrency(appState.netCredit);
-        };
-
-        const stopCoinCounting = () => {
-            if (coinCountingIntervalId) {
-                clearInterval(coinCountingIntervalId);
-                coinCountingIntervalId = null;
-            }
-        };
-
-        const simulateCoinCounting = () => {
-            stopCoinCounting(); // Ensure any previous interval is cleared
-            
-            appState.isCounting = true;
-            elements.transferButton.classList.add('hidden');
-            elements.statusDisplayContainer.classList.remove('hidden');
-            elements.statusMessage.textContent = "Connecting to Kiosk...";
-
-            const coinValues = {
-                'quarters': 0.25,
-                'dimes': 0.10,
-                'nickels': 0.05,
-                'pennies': 0.01
-            };
-            const coinTypes = Object.keys(coinValues);
-
-            const coinMix = {};
-            coinTypes.forEach(type => {
-                coinMix[type] = getRandomInt(10, 30);
-            });
-
-            const allCoins = Object.entries(coinMix).flatMap(([type, count]) => Array(count).fill(type));
-            const shuffledCoins = allCoins.sort(() => Math.random() - 0.5);
-
-            let coinIndex = 0;
-
-            coinCountingIntervalId = setInterval(() => {
-                if (coinIndex >= shuffledCoins.length) {
-                    stopCoinCounting();
-                    appState.isCounting = false;
-                    elements.statusMessage.textContent = "Transaction Ready!";
-                    elements.transferButton.classList.remove('hidden');
-                    return;
-                }
-
-                const coinType = shuffledCoins[coinIndex];
-                appState.grossDeposit += coinValues[coinType];
-                appState.grossDeposit = parseFloat(appState.grossDeposit.toFixed(2));
-                appState.serviceFee = parseFloat((appState.grossDeposit * 0.05).toFixed(2));
-                appState.netCredit = parseFloat((appState.grossDeposit - appState.serviceFee).toFixed(2));
-
-                elements.coinIcon.textContent = getCoinEmoji(coinType);
-                elements.coinIcon.classList.add('pop');
-                setTimeout(() => elements.coinIcon.classList.remove('pop'), 200);
-
-                updateDisplay();
-                coinIndex++;
-            }, 100);
-        };
-
-        const resetTransaction = () => {
-            appState.grossDeposit = 0;
-            appState.serviceFee = 0;
-            appState.netCredit = 0;
-            appState.lastCoinCount = 0;
-            updateDisplay();
-        };
-
-        const addMessageToChat = (message, sender) => {
-            const messageDiv = document.createElement('div');
-            messageDiv.textContent = message;
-            messageDiv.classList.add('chat-message', sender);
-            elements.chatMessages.appendChild(messageDiv);
-            elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
-        };
-
-        const showTypingIndicator = (show) => {
-            elements.aiTypingIndicator.classList.toggle('hidden', !show);
-            if (show) {
-                elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
-            }
-        };
-
-        const callGeminiApi = async (userMessage) => {
-            const systemPrompt = "You are a helpful and friendly AI assistant for the Koin app. Your purpose is to answer user questions about how the app works, its features, and the coin deposit process. Be concise and friendly.";
-            const userQuery = userMessage;
-
-            // !! IMPORTANT: THIS IS YOUR API KEY FOR THE CHATBOT !!
-            // You can get a key from https://aistudio.google.com/
-            // Note: For a public site, a more secure method is recommended.
-            const apiKey = "AIzaSyDb89dfcMMo1q1oapiyjQLgzOlNSAXSaqc";
-            
-            if (!apiKey) {
-                console.error("API Key is missing. Please add your key to the apiKey variable.");
-                return "I'm sorry, the AI assistant is not configured. Please check the code for instructions.";
-            }
-
-            const payload = {
-                contents: [{ parts: [{ text: userQuery }] }],
-                systemInstruction: {
-                    parts: [{ text: systemPrompt }]
-                },
-            };
-
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-
-            try {
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const result = await response.json();
-                const candidate = result.candidates?.[0];
-                return candidate?.content?.parts?.[0]?.text || "I'm sorry, I was unable to get a response from the AI. Please try again.";
-            } catch (error) {
-                console.error("API call failed:", error);
-                return "I'm sorry, the AI service is currently unavailable. Please try again later.";
-            }
-        };
-
-        const handleChatMessage = async (userMessage) => {
-            showTypingIndicator(true);
-            let aiResponse = "I'm sorry, something went wrong. Please try again.";
-            
-            try {
-                aiResponse = await callGeminiApi(userMessage);
-            } catch (error) {
-                console.error("API call failed:", error);
-            } finally {
-                showTypingIndicator(false);
-                addMessageToChat(aiResponse, 'ai');
-            }
-        };
-
-        // --- Event Listeners ---
-        const setupEventListeners = () => {
-            elements.scanButton.addEventListener('click', () => {
-                resetTransaction();
-                switchScreen(2);
-                setTimeout(() => {
-                    elements.statusMessage.textContent = "Start inserting coins.";
-                    simulateCoinCounting();
-                }, 2000);
-            });
-
-            elements.transferButton.addEventListener('click', () => {
-                stopCoinCounting();
-                appState.transactionId = Math.random().toString(36).substring(2, 11).toUpperCase();
-                appState.transactionTimestamp = new Date();
-                elements.receiptGross.textContent = formatCurrency(appState.grossDeposit);
-                elements.receiptFee.textContent = `-${formatCurrency(appState.serviceFee)}`;
-                elements.receiptNetCredit.textContent = formatCurrency(appState.netCredit);
-                elements.receiptTxId.textContent = `#${appState.transactionId}`;
-                elements.receiptTimestamp.textContent = appState.transactionTimestamp.toLocaleString();
-                switchScreen(3);
-            });
-
-            elements.viewWalletButton.addEventListener('click', () => {
-                resetTransaction();
-                switchScreen(1);
-            });
-
-            elements.backButton.addEventListener('click', () => {
-                if (appState.currentScreen === 2) {
-                    stopCoinCounting();
-                    resetTransaction();
-                    switchScreen(1);
-                } else if (appState.currentScreen === 3) {
-                    switchScreen(2);
-                }
-            });
-
-            elements.helpButton.addEventListener('click', () => {
-                elements.aiChatModal.classList.add('visible');
-            });
-
-            elements.closeChatButton.addEventListener('click', () => {
-                elements.aiChatModal.classList.remove('visible');
-            });
-
-            const sendChatMessage = () => {
-                const message = elements.chatInput.value.trim();
-                if (message) {
-                    addMessageToChat(message, 'user');
-                    handleChatMessage(message);
-                    elements.chatInput.value = '';
-                }
-            };
-
-            elements.chatSendButton.addEventListener('click', sendChatMessage);
-
-            elements.chatInput.addEventListener('keypress', (event) => {
-                if (event.key === 'Enter') {
-                    sendChatMessage();
-                }
-            });
-        };
-
-        // --- Initialization ---
-        document.addEventListener('DOMContentLoaded', () => {
-            setupEventListeners();
-        });
-
-        // Expose public API if needed
-        return {};
-    })();
-</script>
+<!-- Subscription Modal -->
+<div id="subscription-modal" class="subscription-modal">
+    <div class="modal-box p-6 space-y-6">
+        <div class="flex justify-between items-center">
+            <h3 class="text-2xl font-bold text-gray-900">Choose Your Plan</h3>
+            <button id="close-subscription-modal-button" class="text-gray-500 hover:text-gray-800 transition-colors">✖</button>
+        </div>
+        <div class="space-y-4">
+            <div class="p-4 rounded-xl border-2 border-indigo-200 bg-indigo-50 text-center space-y-2">
+                <h4 class="text-xl font-bold text-indigo-800">Premium Tier</h4>
+                <p class="text-lg text-indigo-600 font-semibold">$1.00 / month</p>
+                <p class="text-sm text-gray-600">Reduced fee of 2% on all deposits and unlocks the rare coin detection feature.</p>
+                <button id="premium-tier-button" class="mt-2 w-full px-6 py-3 bg-indigo-600 text-white font-semibold rounded-full hover:bg-indigo-700 transition-colors">Select Premium</button>
+            </div>
+            <div class="p-4 rounded-xl border-2 border-gray-200 bg-gray-50 text-center space-y-2">
+                <h4 class="text-xl font-bold text-gray-800">Free Tier</h4>
+                <p class="text-lg text-gray-600 font-semibold">$0.00 / month</p>
+                <p class="text-sm text-gray-500">Standard fee of 5% on all deposits. Basic app features included.</p>
+                <button id="free-tier-button" class="mt-2 w-full px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-full hover:bg-gray-300 transition-colors">Select Free</button>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>
