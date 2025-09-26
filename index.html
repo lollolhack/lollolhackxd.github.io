@@ -28,6 +28,29 @@
         #loading-screen { display: flex; align-items: center; justify-content: center; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: white; z-index: 100; transition: opacity 0.5s; }
         .loader { width: 48px; height: 48px; border: 5px solid #E0E7FF; border-bottom-color: #4F46E5; border-radius: 50%; display: inline-block; box-sizing: border-box; animation: rotation 1s linear infinite; }
         @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* Card specific styling for the prototype */
+        .koin-card {
+            width: 100%;
+            padding-bottom: 63.1%; /* Aspect ratio 1.585:1 (standard credit card) */
+            background: linear-gradient(145deg, #4f46e5, #1e3a8a); /* Deep indigo gradient */
+            border-radius: 1.25rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            position: relative;
+            color: white;
+            transition: transform 0.3s;
+            cursor: pointer;
+        }
+        .koin-card-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
     </style>
 </head>
 <body>
@@ -44,12 +67,22 @@
     </header>
 
     <!-- Screen 0: Wallet Home -->
-    <div id="screen-0" class="screen active flex-col items-center justify-center text-center space-y-8">
+    <div id="screen-0" class="screen active flex-col items-center justify-center text-center space-y-4 pt-8">
         <div class="w-28 h-28 flex items-center justify-center bg-indigo-100 rounded-full animate-pop">
             <span class="text-indigo-600 text-6xl">$</span>
         </div>
         <h2 class="text-5xl font-extrabold text-gray-900" id="wallet-balance">$0.00</h2>
         <button id="subscription-status-button" class="text-lg text-gray-600 underline hover:text-indigo-600 transition-colors">Free Tier</button>
+        
+        <!-- NEW HISTORY BUTTON -->
+        <button id="view-history-button" class="w-full px-6 py-4 bg-gray-200 text-gray-800 font-semibold text-lg rounded-full shadow-lg hover:bg-gray-300 transition-all transform hover:scale-105 mt-6">
+            Transaction History
+        </button>
+        
+        <!-- Existing View Card button -->
+        <button id="view-card-button" class="w-full px-6 py-4 bg-purple-500 text-white font-semibold text-lg rounded-full shadow-lg hover:bg-purple-600 transition-all transform hover:scale-105">
+            View Card
+        </button>
         <button id="deposit-button" class="w-full px-6 py-4 bg-indigo-600 text-white font-semibold text-lg rounded-full shadow-lg hover:bg-indigo-700 transition-all transform hover:scale-105">
             Deposit Coins
         </button>
@@ -74,7 +107,7 @@
             <div id="counting-animation-container" class="relative w-40 h-40 flex items-center justify-center">
                 <span id="coin-icon" class="coin-icon absolute">$</span>
             </div>
-            <h2 id="status-message" class="text-2xl font-semibold text-gray-700 mt-4">Connecting to Kiosk...</h2>
+            <h2 id="status-message" class="text-2xl font-semibold text-gray-700 mt-4">Connecting to Kiosk... </h2>
         </div>
         <div class="text-6xl font-extrabold text-gray-900" id="gross-display">$0.00</div>
         <p class="text-sm text-gray-500 mt-2">Gross Deposit</p>
@@ -105,9 +138,9 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
             </svg>
         </div>
-        <h2 class="text-3xl font-bold text-gray-900">Transfer Complete!</h2>
+        <h2 class="text-3xl font-bold text-gray-900">Transfer Complete! </h2>
         <div class="w-full bg-gray-50 rounded-2xl p-6 shadow-sm border border-gray-200 text-left space-y-4">
-            <h3 class="text-lg font-bold text-gray-800 mb-2">Transaction Summary</h3>
+            <h3 class="text-lg font-bold text-gray-800 mb-2">Transaction Summary </h3>
             <div class="space-y-3 text-sm">
                 <div class="flex justify-between"><span class="text-gray-500">Gross Deposit:</span><span id="receipt-gross" class="font-medium text-gray-800">$0.00</span></div>
                 <div class="flex justify-between"><span class="text-gray-500">Service Fee:</span><span id="receipt-fee" class="font-medium text-red-500">-$0.00</span></div>
@@ -119,6 +152,65 @@
         <button id="view-wallet-button" class="w-full px-6 py-4 bg-indigo-600 text-white font-semibold text-lg rounded-full shadow-lg hover:bg-indigo-700 transition-all transform hover:scale-105">
             View Wallet
         </button>
+    </div>
+    
+    <!-- Screen 4: View Card -->
+    <div id="screen-4" class="screen flex-col items-center justify-center text-center space-y-8">
+        <h1 class="text-3xl font-extrabold text-gray-900 mb-6">Your Digital Card</h1>
+        
+        <div class="koin-card hover:scale-[1.02] active:scale-[0.98]">
+            <div class="koin-card-content">
+                <!-- Top Section -->
+                <div class="flex justify-between items-start">
+                    <span class="text-3xl font-black tracking-widest leading-none">KOIN</span>
+                    <!-- Chip SVG -->
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8 text-yellow-300">
+                        <rect x="2" y="7" width="20" height="10" rx="2" ry="2"></rect>
+                        <line x1="8" y1="7" x2="8" y2="17"></line>
+                        <line x1="16" y1="7" x2="16" y2="17"></line>
+                        <line x1="12" y1="7" x2="12" y2="17"></line>
+                        <line x1="2" y1="12" x2="22" y2="12"></line>
+                    </svg>
+                </div>
+
+                <!-- Middle Section - Card Number -->
+                <div class="text-3xl font-mono font-semibold tracking-wider drop-shadow-md">
+                    <span class="text-lg font-light text-gray-300 mr-2">••••</span> 4242 
+                    <span class="text-lg font-light text-gray-300 mx-1">••••</span> •••• 
+                    <span class="text-lg font-light text-gray-300 ml-1">••••</span> 0001
+                </div>
+
+                <!-- Bottom Section - Name and Expiry -->
+                <div class="flex justify-between items-center text-sm font-medium">
+                    <div class="flex flex-col text-left">
+                        <span class="text-xs text-gray-300 uppercase">Card Holder</span>
+                        <span class="text-lg tracking-wider">JANE DOE</span>
+                    </div>
+                    <div class="flex flex-col text-right">
+                        <span class="text-xs text-gray-300 uppercase">Expires</span>
+                        <span class="text-lg">12/28</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="w-full p-4 bg-gray-50 rounded-xl shadow-inner border border-gray-200 text-left space-y-3">
+             <div class="text-sm text-gray-600 flex justify-between"><span>CVV:</span> <span class="font-mono text-gray-900 font-semibold">123</span></div>
+             <div class="text-sm text-gray-600 flex justify-between"><span>Status:</span> <span class="font-semibold text-green-600">Active</span></div>
+             <div class="text-sm text-gray-600 flex justify-between"><span>Card Type:</span> <span class="font-semibold text-gray-900">Virtual Prepaid</span></div>
+        </div>
+        
+        <button onclick="KoinApp.showMessage('Card successfully copied to clipboard! (Prototype functionality)')" class="w-full px-6 py-4 bg-indigo-600 text-white font-semibold text-lg rounded-full shadow-lg hover:bg-indigo-700 transition-all transform hover:scale-105">
+            Copy Card Details
+        </button>
+    </div>
+
+    <!-- Screen 5: Transaction History (NEW) -->
+    <div id="screen-5" class="screen flex-col space-y-6">
+        <h1 class="text-3xl font-extrabold text-gray-900 mb-2">Transaction History</h1>
+        <div id="history-list" class="flex flex-col space-y-3 overflow-y-auto flex-grow h-full max-h-[70vh]">
+            <p id="no-history-message" class="text-center text-gray-500 italic mt-8">No coin deposits recorded yet. Time to get counting!</p>
+        </div>
     </div>
 </div>
 
@@ -171,6 +263,7 @@
         // --- State and Element References ---
         const appState = {
             walletBalance: 0,
+            history: [], // ADDED: Array to store transaction history
             subscriptionStatus: 'Free Tier',
             lastPaymentDate: null,
             currentScreen: 0,
@@ -182,7 +275,8 @@
             isCounting: false,
             rareCoinFound: null,
             isChatOpen: false,
-            isAiTyping: false
+            isAiTyping: false,
+            serviceFeeRate: 0.05 // Initial Fee Rate
         };
         let coinCountingIntervalId = null;
 
@@ -221,21 +315,41 @@
             freeTierButton: document.getElementById('free-tier-button'),
             premiumTierButton: document.getElementById('premium-tier-button'),
             rareCoinBonusDisplay: document.getElementById('rare-coin-bonus-display'),
-            rareCoinBonusRow: document.getElementById('rare-coin-bonus-row')
+            rareCoinBonusRow: document.getElementById('rare-coin-bonus-row'),
+            viewCardButton: document.getElementById('view-card-button'),
+            // ADDED: History elements
+            viewHistoryButton: document.getElementById('view-history-button'),
+            historyList: document.getElementById('history-list'),
+            noHistoryMessage: document.getElementById('no-history-message')
         };
         
         // Hardcoded list of rare coins and their values for the app demo
         const rareCoins = [
-            { coinType: 'pennies', value: 0.01, rareValue: 50, name: '1909-S VDB Lincoln Cent' },
-            { coinType: 'nickels', value: 0.05, rareValue: 150, name: '1937-D Three-Legged Buffalo Nickel' },
-            { coinType: 'dimes', value: 0.10, rareValue: 100, name: '1916-D Mercury Dime' },
-            { coinType: 'quarters', value: 0.25, rareValue: 200, name: '1932-S Washington Quarter' },
+            { coinType: 'pennies', value: 0.01, rareValue: 50.00, name: '1909-S VDB Lincoln Cent' },
+            { coinType: 'nickels', value: 0.05, rareValue: 150.00, name: '1937-D Three-Legged Buffalo Nickel' },
+            { coinType: 'dimes', value: 0.10, rareValue: 100.00, name: '1916-D Mercury Dime' },
+            { coinType: 'quarters', value: 0.25, rareValue: 200.00, name: '1932-S Washington Quarter' },
         ];
         
         // --- Core App Functions ---
         const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
         const formatCurrency = (amount) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
         
+        // Expose showMessage globally for inline HTML button
+        window.KoinApp = { showMessage: showMessage };
+
+        function showMessage(message, type = 'info') {
+            const modal = document.createElement('div');
+            modal.className = `fixed inset-0 flex items-center justify-center z-[100] p-4 bg-black bg-opacity-40 transition-opacity duration-300`;
+            modal.innerHTML = `
+                <div class="bg-white rounded-xl shadow-2xl p-6 text-center max-w-sm w-full animate-pop">
+                    <p class="font-medium text-lg mb-4 text-gray-800">${message}</p>
+                    <button class="bg-indigo-600 text-white px-6 py-2 rounded-full font-semibold hover:bg-indigo-700 transition-colors" onclick="this.parentNode.parentNode.remove()">OK</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
         const getCoinEmoji = (coinType) => {
             switch (coinType) {
                 case 'quarters': return '🪙';
@@ -246,23 +360,12 @@
             }
         };
 
-        const showMessage = (message, type = 'info') => {
-            const modal = document.createElement('div');
-            modal.className = `fixed inset-0 flex items-center justify-center z-[100] p-4 bg-black bg-opacity-40 transition-opacity duration-300`;
-            modal.innerHTML = `
-                <div class="bg-white rounded-xl shadow-2xl p-6 text-center max-w-sm w-full animate-pop">
-                    <p class="font-medium text-lg mb-4 text-gray-800">${message}</p>
-                    <button class="bg-indigo-600 text-white px-6 py-2 rounded-full font-semibold hover:bg-indigo-700 transition-colors" onclick="this.parentNode.parentNode.remove()">OK</button>
-                </div>
-            `;
-            document.body.appendChild(modal);
-        };
-
         const switchScreen = (screenNumber) => {
             elements.screens.forEach(screen => screen.classList.remove('active'));
             document.getElementById(`screen-${screenNumber}`).classList.add('active');
             appState.currentScreen = screenNumber;
-            elements.backButton.classList.toggle('hidden', screenNumber === 0 || screenNumber === 1);
+            // Back button visible for all screens except home (0)
+            elements.backButton.classList.toggle('hidden', screenNumber === 0); 
         };
 
         const updateWalletUI = () => {
@@ -275,9 +378,17 @@
             if (appState.subscriptionStatus === 'Free Tier') {
                 appState.serviceFeeRate = freeFee;
                 elements.feePercentage.textContent = '5%';
+                elements.premiumTierButton.textContent = 'Select Premium';
+                elements.premiumTierButton.disabled = false;
+                elements.freeTierButton.textContent = 'Current Plan';
+                elements.freeTierButton.disabled = true;
             } else if (appState.subscriptionStatus === 'Premium Tier') {
                 appState.serviceFeeRate = premiumFee;
                 elements.feePercentage.textContent = '2%';
+                elements.premiumTierButton.textContent = 'Current Plan';
+                elements.premiumTierButton.disabled = true;
+                elements.freeTierButton.textContent = 'Downgrade to Free';
+                elements.freeTierButton.disabled = false;
             }
         };
 
@@ -339,7 +450,7 @@
                 
                 // Check for rare coin if premium subscription is active
                 if (appState.subscriptionStatus === 'Premium Tier') {
-                    const isRare = Math.random() < 0.005; // Decreased the chance to 0.5%
+                    const isRare = Math.random() < 0.05; 
                     if (isRare) {
                         const foundRareCoin = rareCoins.find(c => c.coinType === coinType);
                         if (foundRareCoin) {
@@ -352,8 +463,12 @@
 
                 appState.grossDeposit += coinValue;
                 appState.grossDeposit = parseFloat(appState.grossDeposit.toFixed(2));
-                appState.serviceFee = parseFloat((appState.grossDeposit * appState.serviceFeeRate).toFixed(2));
-                appState.netCredit = parseFloat((appState.grossDeposit - appState.serviceFee).toFixed(2));
+                let bonus = appState.rareCoinFound ? appState.rareCoinFound.rareValue : 0;
+                let feeBase = appState.grossDeposit - bonus;
+                
+                // Fee is only applied to the coin deposit, not the rare coin bonus
+                appState.serviceFee = parseFloat((feeBase * appState.serviceFeeRate).toFixed(2));
+                appState.netCredit = parseFloat((appState.grossDeposit + (appState.rareCoinFound ? appState.rareCoinFound.rareValue : 0) - appState.serviceFee).toFixed(2));
                 
                 elements.coinIcon.textContent = getCoinEmoji(coinType);
                 elements.coinIcon.classList.add('pop');
@@ -375,13 +490,62 @@
         const handlePremiumPayment = () => {
             if (appState.walletBalance >= 1) {
                 appState.walletBalance = parseFloat((appState.walletBalance - 1).toFixed(2));
+                
+                // ADDED: Record Subscription Payment Transaction
+                const premiumTx = {
+                    id: Math.random().toString(36).substring(2, 11).toUpperCase(),
+                    timestamp: new Date().toISOString(),
+                    gross: -1.00, // Cost of subscription
+                    fee: 0,
+                    net: -1.00,
+                    type: 'Premium Subscription',
+                    subscription: 'Premium Tier',
+                    bonus: 0,
+                    rareCoinName: null
+                };
+                appState.history.unshift(premiumTx);
+
                 appState.subscriptionStatus = 'Premium Tier';
                 elements.subscriptionModal.classList.remove('visible');
                 updateWalletUI();
-                showMessage("Success! You're now a Premium member.", 'success');
+                showMessage("Success! You're now a Premium member. Enjoy the 5% rare coin chance and reduced fees!", 'success');
             } else {
                 showMessage("Insufficient funds to upgrade to Premium. You need at least $1.00.", 'error');
             }
+        };
+
+        // ADDED: Function to render the history list
+        const renderHistory = () => {
+            elements.historyList.innerHTML = '';
+            
+            if (appState.history.length === 0) {
+                elements.historyList.innerHTML = '<p id="no-history-message" class="text-center text-gray-500 italic mt-8">No coin deposits recorded yet. Time to get counting!</p>';
+                return;
+            }
+
+            appState.history.forEach(tx => {
+                const date = new Date(tx.timestamp).toLocaleString();
+                const isBonus = tx.bonus > 0;
+                const netColor = tx.net >= 0 ? 'text-green-600' : 'text-red-600';
+                const txType = tx.type === 'Coin Deposit' ? 'Coin Deposit' : 'Subscription';
+
+                const txElement = document.createElement('div');
+                txElement.className = 'flex justify-between items-center p-4 rounded-xl bg-white shadow-sm border border-gray-100 transition-shadow hover:shadow-md';
+                txElement.innerHTML = `
+                    <div class="flex flex-col text-left">
+                        <span class="font-semibold text-gray-900 text-base">${tx.type}</span>
+                        <span class="text-xs text-gray-500">${date}</span>
+                        ${isBonus ? `<span class="text-xs text-green-500 font-medium">${tx.rareCoinName} Bonus</span>` : ''}
+                        <span class="text-xs text-gray-400 mt-1">ID: ${tx.id}</span>
+                    </div>
+                    <div class="flex flex-col text-right">
+                        <span class="text-lg font-bold ${netColor}">${formatCurrency(tx.net)}</span>
+                        <span class="text-xs text-gray-500">Net Value</span>
+                        ${tx.fee > 0 ? `<span class="text-xs text-red-500 mt-1">Fee: ${formatCurrency(tx.fee)}</span>` : ''}
+                    </div>
+                `;
+                elements.historyList.appendChild(txElement);
+            });
         };
 
         // --- AI Chat Logic ---
@@ -403,9 +567,9 @@
             } else if (lowerCaseMessage.includes('kiosk')) {
                 aiResponse = "You can find the nearest Koin Kiosk on the map. Simply head to the 'Find Kiosks' screen from the home page.";
             } else if (lowerCaseMessage.includes('fee')) {
-                aiResponse = "Koin charges a standard service fee on all deposits. The fee is 5% for our Free Tier and a reduced 2% for our Premium Tier members.";
+                aiResponse = `Koin charges a service fee on all deposits. It is ${appState.serviceFeeRate * 100}% for your current ${appState.subscriptionStatus}.`;
             } else if (lowerCaseMessage.includes('premium')) {
-                aiResponse = "The Premium Tier subscription costs $1.00 per month. It reduces your service fee to 2% and unlocks the rare coin detection feature. You can upgrade from the home screen.";
+                aiResponse = "The Premium Tier subscription costs $1.00 per month. It reduces your service fee to 2% and unlocks the rare coin detection feature, which has a 5% chance of finding a bonus coin during a deposit!";
             }
             
             setTimeout(() => {
@@ -418,6 +582,14 @@
             // Screen switching
             elements.depositButton.addEventListener('click', () => switchScreen(1));
             elements.goToKiosksButton.addEventListener('click', () => switchScreen(1));
+            elements.viewCardButton.addEventListener('click', () => switchScreen(4));
+            
+            // ADDED: History Button Listener
+            elements.viewHistoryButton.addEventListener('click', () => {
+                renderHistory();
+                switchScreen(5);
+            });
+            
             elements.scanButton.addEventListener('click', () => {
                 resetTransaction();
                 switchScreen(2);
@@ -426,52 +598,56 @@
                     simulateCoinCounting();
                 }, 2000);
             });
+
             elements.transferButton.addEventListener('click', () => {
                 stopCoinCounting();
                 appState.walletBalance += appState.netCredit;
                 appState.walletBalance = parseFloat(appState.walletBalance.toFixed(2));
                 appState.transactionId = Math.random().toString(36).substring(2, 11).toUpperCase();
                 appState.transactionTimestamp = new Date();
+                
+                // ADDED: Record Coin Deposit Transaction
+                const newTransaction = {
+                    id: appState.transactionId,
+                    timestamp: appState.transactionTimestamp.toISOString(),
+                    gross: appState.grossDeposit,
+                    fee: appState.serviceFee,
+                    net: appState.netCredit,
+                    type: 'Coin Deposit',
+                    subscription: appState.subscriptionStatus,
+                    bonus: appState.rareCoinFound ? appState.rareCoinFound.rareValue : 0,
+                    rareCoinName: appState.rareCoinFound ? appState.rareCoinFound.name : null
+                };
+                appState.history.unshift(newTransaction);
+
                 elements.receiptGross.textContent = formatCurrency(appState.grossDeposit);
                 elements.receiptFee.textContent = `-${formatCurrency(appState.serviceFee)}`;
                 elements.receiptNetCredit.textContent = formatCurrency(appState.netCredit);
                 elements.receiptTxId.textContent = `#${appState.transactionId}`;
                 elements.receiptTimestamp.textContent = appState.transactionTimestamp.toLocaleString();
-                updateWalletUI();
+                updateWalletUI(); // Update final balance display
                 switchScreen(3);
             });
+
             elements.viewWalletButton.addEventListener('click', () => {
-                resetTransaction();
                 switchScreen(0);
+                resetTransaction();
             });
+
             elements.backButton.addEventListener('click', () => {
-                if (appState.currentScreen === 1) {
+                if (appState.currentScreen === 5 || appState.currentScreen === 4 || appState.currentScreen === 1) {
                     switchScreen(0);
                 } else if (appState.currentScreen === 2) {
                     stopCoinCounting();
                     resetTransaction();
                     switchScreen(1);
                 } else if (appState.currentScreen === 3) {
-                    switchScreen(2);
+                    // From receipt back to home
+                    switchScreen(0); 
                 }
             });
-            
-            // Subscription modal listeners
-            elements.subscriptionStatusButton.addEventListener('click', () => {
-                elements.subscriptionModal.classList.add('visible');
-            });
-            elements.closeSubscriptionModalButton.addEventListener('click', () => {
-                elements.subscriptionModal.classList.remove('visible');
-            });
-            elements.freeTierButton.addEventListener('click', () => {
-                appState.subscriptionStatus = 'Free Tier';
-                elements.subscriptionModal.classList.remove('visible');
-                updateWalletUI();
-                showMessage("Subscription updated to Free Tier.", 'success');
-            });
-            elements.premiumTierButton.addEventListener('click', handlePremiumPayment);
 
-            // Chat listeners
+            // AI Chat listeners
             elements.helpButton.addEventListener('click', () => elements.aiChatModal.classList.add('visible'));
             elements.closeChatButton.addEventListener('click', () => elements.aiChatModal.classList.remove('visible'));
 
@@ -489,16 +665,44 @@
                     sendChatMessage();
                 }
             });
+
+            // Subscription listeners
+            elements.subscriptionStatusButton.addEventListener('click', () => elements.subscriptionModal.classList.add('visible'));
+            elements.closeSubscriptionModalButton.addEventListener('click', () => elements.subscriptionModal.classList.remove('visible'));
+
+            elements.freeTierButton.addEventListener('click', () => {
+                if (appState.subscriptionStatus === 'Premium Tier') {
+                    // ADDED: Record Subscription Downgrade Transaction
+                    const freeTx = {
+                        id: Math.random().toString(36).substring(2, 11).toUpperCase(),
+                        timestamp: new Date().toISOString(),
+                        gross: 0,
+                        fee: 0,
+                        net: 0,
+                        type: 'Subscription Downgrade',
+                        subscription: 'Free Tier',
+                        bonus: 0,
+                        rareCoinName: null
+                    };
+                    appState.history.unshift(freeTx);
+                    
+                    appState.subscriptionStatus = 'Free Tier';
+                    elements.subscriptionModal.classList.remove('visible');
+                    updateWalletUI();
+                    showMessage("Subscription updated to Free Tier (5% fee).", 'success');
+                }
+            });
+            elements.premiumTierButton.addEventListener('click', handlePremiumPayment);
         };
 
         // --- Initialization ---
         document.addEventListener('DOMContentLoaded', () => {
             setupEventListeners();
-            updateWalletUI(); // Initialize wallet display on load
+            updateWalletUI(); // Initialize wallet display and fee rate on load
             switchScreen(0); // Start on the wallet home screen
         });
         
-        return {};
+        return { showMessage };
     })();
 </script>
 </body>
