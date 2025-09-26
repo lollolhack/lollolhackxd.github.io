@@ -389,7 +389,7 @@
         const callGeminiApi = async (userMessage) => {
             const systemPrompt = "You are a helpful and friendly AI assistant for the Koin app. Your purpose is to answer user questions about how the app works, its features, and the coin deposit process. Be concise and friendly.";
             const userQuery = userMessage;
-            const apiKey = ""; // Keep this empty, the Canvas environment will handle it
+            const apiKey = "AIzaSyDb89dfcMMo1q1oapiyjQLgzOlNSAXSaqc"; // Your provided API key
 
             const payload = {
                 contents: [{ parts: [{ text: userQuery }] }],
@@ -430,6 +430,7 @@
         };
 
         const handleChatMessage = async (userMessage) => {
+            addMessageToChat(userMessage, 'user');
             showTypingIndicator(true);
             let aiResponse = "I'm sorry, something went wrong. Please try again.";
             
@@ -508,7 +509,6 @@
             const sendChatMessage = () => {
                 const message = elements.chatInput.value.trim();
                 if (message) {
-                    addMessageToChat(message, 'user');
                     handleChatMessage(message);
                     elements.chatInput.value = '';
                 }
