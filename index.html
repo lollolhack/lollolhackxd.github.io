@@ -1,709 +1,901 @@
+Gmail	Alvise degli Azzoni Avogadro <alvisedegliazzoniavogadro@gmail.com>
+Koin App Source Code
+Edo_ giardi13 <edoardogj@gmail.com>	27 settembre 2025 alle ore 13:13
+A: "alvisedegliazzoniavogadro@gmail.com" <alvisedegliazzoniavogadro@gmail.com>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Koin | The Next-Gen Prototype</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg,#e0e7ff 0%,#f1f5f9 100%); display:flex; justify-content:center; align-items:center; min-height:100vh; margin:0; }
-        .app-container { width:100%; max-width:420px; min-height:100vh; background:white; border-radius:1.5rem; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); display:flex; flex-direction:column; overflow-y:auto; transition:all 0.5s cubic-bezier(0.4,0,0.2,1); }
-        @media(min-width:640px){ .app-container{height:90vh;margin:2rem auto;} }
-        .screen { display:none; flex-direction:column; padding:2.5rem 1.5rem; animation:fadeIn 0.5s forwards; position:relative; }
-        .screen.active { display:flex; }
-        @keyframes fadeIn { from{opacity:0;transform:translateY(20px);} to{opacity:1;transform:translateY(0);} }
-        .animate-pop { animation:popIn 0.6s forwards; }
-        @keyframes popIn {0%{transform:scale(0.8);opacity:0;}50%{transform:scale(1.1);opacity:1;}100%{transform:scale(1);}}
-        .coin-icon { transition: transform 0.3s; font-size:2.5rem; }
-        .coin-icon.pop { transform: scale(1.2); }
-        .ai-chat-modal, .subscription-modal { position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:50; opacity:0; pointer-events:none; transition:opacity 0.3s; }
-        .ai-chat-modal.visible, .subscription-modal.visible { opacity:1; pointer-events:auto; }
-        .chat-box, .modal-box { background:white; border-radius:1.5rem; width:90%; max-width:400px; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1),0 10px 10px -5px rgba(0,0,0,0.04); }
-        .chat-box { height:80vh; }
-        .chat-messages { flex-grow:1; overflow-y:auto; padding:1rem; display:flex; flex-direction:column; gap:0.75rem; }
-        .chat-message { max-width:85%; padding:0.75rem 1rem; border-radius:1.25rem; line-height:1.4; }
-        .chat-message.user { background:#3b82f6; color:white; align-self:flex-end; border-bottom-right-radius:0.25rem; }
-        .chat-message.ai { background:#e5e7eb; color:#1f2937; align-self:flex-start; border-bottom-left-radius:0.25rem; }
-        #loading-screen { display: flex; align-items: center; justify-content: center; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: white; z-index: 100; transition: opacity 0.5s; }
-        .loader { width: 48px; height: 48px; border: 5px solid #E0E7FF; border-bottom-color: #4F46E5; border-radius: 50%; display: inline-block; box-sizing: border-box; animation: rotation 1s linear infinite; }
-        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        /* Card specific styling for the prototype */
-        .koin-card {
-            width: 100%;
-            padding-bottom: 63.1%; /* Aspect ratio 1.585:1 (standard credit card) */
-            background: linear-gradient(145deg, #4f46e5, #1e3a8a); /* Deep indigo gradient */
-            border-radius: 1.25rem;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
-            position: relative;
-            color: white;
-            transition: transform 0.3s;
-            cursor: pointer;
-        }
-        .koin-card-content {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            padding: 1.5rem;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-    </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#4f46e5" />
+<link rel="manifest" href="manifest.json" />
+<title>Koin | The Next-Gen Prototype</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+:root {
+--overlay: rgba(0,0,0,0.6);
+}
+* { box-sizing: border-box; }
+body { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, 'Helvetica Neue', Arial, sans-serif; background: linear-gradient(135deg,#e0e7ff 0%,#f1f5f9 100%); min-height:100vh; margin:0; }
+.app-container { width:100%; max-width:420px; min-height:100vh; background:linear-gradient(180deg,#ffffff 0%, #f8fafc 100%); border-radius:1.5rem; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); display:flex; flex-direction:column; overflow:hidden; transition:all 0.5s cubic-bezier(0.4,0,0.2,1); margin:0 auto; }
+@media(min-width:640px){ .app-container{height:90vh;margin:2rem auto;} }
+
+.screen { display:none; flex-direction:column; padding:2rem 1.25rem; position:relative; padding-bottom:5.5rem; }
+.screen.active { display:flex; }
+.animate-enter { animation: fadeIn 320ms var(--ease, cubic-bezier(0.4,0,0.2,1)) forwards; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(10px);} to{opacity:1;transform:translateY(0);} }
+.animate-pop { animation: popIn 440ms var(--ease, cubic-bezier(0.4,0,0.2,1)) forwards; }
+@keyframes popIn {0%{transform:scale(0.9);opacity:0;}60%{transform:scale(1.04);opacity:1;}100%{transform:scale(1);} }
+@media (prefers-reduced-motion: reduce) {
+.animate-enter, .animate-pop { animation: none !important; }
+.coin-icon { transition: none !important; }
+}
+
+.coin-icon { transition: transform 0.12s; font-size:2.25rem; }
+.coin-icon.pop { transform: scale(1.2) rotate(-8deg); }
+
+.modal-overlay { position:absolute; inset:0; background:var(--overlay); display:flex; align-items:center; justify-content:center; z-index:50; opacity:0; pointer-events:none; transition:opacity 0.2s; }
+.modal-overlay.visible { opacity:1; pointer-events:auto; }
+.modal-box { background:white; border-radius:1.25rem; width:min(92%, 420px); max-height:84vh; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1),0 10px 10px -5px rgba(0,0,0,0.04); }
+.chat-box { height:80vh; }
+.chat-messages { flex-grow:1; overflow-y:auto; padding:1rem; display:flex; flex-direction:column; gap:0.75rem; scroll-behavior: smooth; }
+.chat-message { max-width:85%; padding:0.5rem 0.75rem; border-radius:1rem; line-height:1.4; font-size:0.95rem; }
+.chat-message.user { background:#3b82f6; color:white; align-self:flex-end; border-bottom-right-radius:0.25rem; }
+.chat-message.ai { background:#e5e7eb; color:#111827; align-self:flex-start; border-bottom-left-radius:0.25rem; }
+.ai-avatar { width:32px; height:32px; border-radius:9999px; background:linear-gradient(135deg,#4f46e5,#1e3a8a); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.9rem; }
+/* Minimal dark mode overrides */
+.dark body { background: linear-gradient(135deg,#0b1220 0%,#0f172a 100%); }
+.dark .app-container { background:#0b1020; }
+.dark #loading-screen { background:#0b1020; }
+.dark .toast { background:#334155; color:#e5e7eb; }
+.dark .modal-box { background:#0b1020; color:#e5e7eb; }
+.dark .screen h1, .dark .screen h2, .dark .screen h3, .dark .screen p, .dark .screen span, .dark .screen div { color: #e5e7eb; }
+
+#loading-screen { display:flex; align-items:center; justify-content:center; position:absolute; inset:0; background:white; z-index:100; transition:opacity 0.3s ease; }
+.loader { width: 48px; height: 48px; border: 5px solid #E0E7FF; border-bottom-color: #4F46E5; border-radius: 50%; display: inline-block; box-sizing: border-box; animation: rotation 1s linear infinite; }
+@keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+.koin-card { width: 100%; padding-bottom: 63.1%; background: linear-gradient(145deg, #4f46e5, #1e3a8a); border-radius: 1.25rem; box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25); position: relative; color: white; transition: transform 0.2s; cursor: pointer; }
+.koin-card:hover { transform: translateY(-2px); }
+.koin-card:active { transform: translateY(0); }
+.koin-card-content { position: absolute; inset:0; padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between; }
+
+.toast { position: fixed; left:50%; bottom:20px; transform: translateX(-50%); background:#111827; color:white; padding:0.75rem 1rem; border-radius:0.75rem; box-shadow: 0 10px 20px rgba(0,0,0,0.25); opacity:0; pointer-events:none; transition: opacity .2s, transform .2s; z-index: 200; }
+.toast.show { opacity:1; pointer-events:auto; transform: translateX(-50%) translateY(-4px); }
+.brand { font-weight:800; letter-spacing:.08em; background:linear-gradient(90deg,#4f46e5 0%,#8b5cf6 60%,#ec4899 100%); -webkit-background-clip:text; background-clip:text; color:transparent; }
+#wallet-balance { font-variant-numeric: tabular-nums; letter-spacing:-0.01em; }
+</style>
 </head>
 <body>
-<div class="app-container">
-    <!-- Header -->
-    <header class="p-6 pb-0 flex justify-between items-center text-gray-400">
-        <button id="back-button" class="hidden transition-transform hover:scale-110">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/>
-            </svg>
-        </button>
-        <div class="flex-grow"></div>
-        <button id="help-button" class="transition-transform hover:scale-110">Need Help?</button>
-    </header>
+<div class="app-container relative" aria-live="polite">
+<!-- Decorative background blobs -->
+<div aria-hidden="true" class="pointer-events-none absolute inset-0 overflow-hidden">
+<div class="absolute -top-20 -left-28 w-80 h-80 rounded-full bg-gradient-to-br from-indigo-300 to-purple-300 opacity-30 blur-3xl"></div>
+<div class="absolute -bottom-16 -right-20 w-96 h-96 rounded-full bg-gradient-to-br from-cyan-200 to-indigo-300 opacity-40 blur-3xl"></div>
+</div>
+<div id="loading-screen" aria-hidden="true"><span class="loader" aria-label="Loading"></span></div>
+<script>
+// Failsafe: hide loading screen if anything blocks init
+setTimeout(() => { try { const l = document.getElementById('loading-screen'); if (l) l.style.display = 'none'; } catch {} }, 3000);
+</script>
 
-    <!-- Screen 0: Wallet Home -->
-    <div id="screen-0" class="screen active flex-col items-center justify-center text-center space-y-4 pt-8">
-        <div class="w-28 h-28 flex items-center justify-center bg-indigo-100 rounded-full animate-pop">
-            <span class="text-indigo-600 text-6xl">$</span>
-        </div>
-        <h2 class="text-5xl font-extrabold text-gray-900" id="wallet-balance">$0.00</h2>
-        <button id="subscription-status-button" class="text-lg text-gray-600 underline hover:text-indigo-600 transition-colors">Free Tier</button>
-        
-        <!-- NEW HISTORY BUTTON -->
-        <button id="view-history-button" class="w-full px-6 py-4 bg-gray-200 text-gray-800 font-semibold text-lg rounded-full shadow-lg hover:bg-gray-300 transition-all transform hover:scale-105 mt-6">
-            Transaction History
-        </button>
-        
-        <!-- Existing View Card button -->
-        <button id="view-card-button" class="w-full px-6 py-4 bg-purple-500 text-white font-semibold text-lg rounded-full shadow-lg hover:bg-purple-600 transition-all transform hover:scale-105">
-            View Card
-        </button>
-        <button id="deposit-button" class="w-full px-6 py-4 bg-indigo-600 text-white font-semibold text-lg rounded-full shadow-lg hover:bg-indigo-700 transition-all transform hover:scale-105">
-            Deposit Coins
-        </button>
-        <button id="go-to-kiosks-button" class="w-full px-6 py-4 bg-gray-200 text-gray-800 font-semibold text-lg rounded-full shadow-lg hover:bg-gray-300 transition-all transform hover:scale-105">
-            Find Kiosks
-        </button>
-    </div>
+<!-- Header -->
+<header class="p-4 pb-0 flex justify-between items-center text-gray-500">
+<button id="back-button" class="hidden transition-transform hover:scale-110" aria-label="Go back">
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
+</button>
+<div class="flex items-center gap-3">
+<span class="brand text-sm tracking-widest">KOIN</span>
+</div>
+<div class="flex-grow"></div>
+<button id="settings-button" class="mr-2 transition-transform hover:scale-110" aria-haspopup="dialog" aria-controls="settings-modal" title="Settings">⚙️</button>
+<button id="help-button" class="px-3 py-1.5 rounded-full bg-white text-gray-700 ring-1 ring-gray-200 hover:bg-gray-100 transition-colors" aria-haspopup="dialog" aria-controls="ai-chat-modal">Need Help?</button>
+</header>
 
-    <!-- Screen 1: Find Kiosks -->
-    <div id="screen-1" class="screen flex-col items-center justify-center text-center space-y-10">
-        <h1 class="text-4xl font-extrabold text-gray-900">Find Kiosks</h1>
-        <p class="text-lg text-gray-600">Find a Koin Kiosk nearby</p>
-        <iframe src="https://storage.googleapis.com/maps-solutions-2fxrm56wcn/locator-plus/kbwo/locator-plus.html" class="rounded-2xl shadow-md border-2 border-indigo-200 w-full h-80" style="border:0;"></iframe>
-        <button id="scan-button" class="w-full px-6 py-4 bg-indigo-600 text-white font-semibold text-lg rounded-full shadow-lg hover:bg-indigo-700 transition-all transform hover:scale-105">
-            Scan Kiosk QR Code
-        </button>
-    </div>
+<!-- Screen 0: Wallet Home -->
+<main id="screen-0" class="screen active animate-enter items-center text-center space-y-4 pt-6" role="region" aria-label="Wallet Home">
+<div class="w-28 h-28 flex items-center justify-center bg-indigo-100 rounded-2xl animate-pop"><span class="text-indigo-600 text-6xl" aria-hidden="true">$</span></div>
+<h2 class="text-5xl font-extrabold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 bg-clip-text text-transparent drop-shadow-sm" id="wallet-balance" aria-live="polite">$0.00</h2>
+<button id="subscription-status-button" class="text-base text-gray-600 underline hover:text-indigo-600 transition-colors" aria-haspopup="dialog" aria-controls="subscription-modal">Free Tier</button>
 
-    <!-- Screen 2: Coin Counting -->
-    <div id="screen-2" class="screen flex-col items-center justify-center text-center space-y-8">
-        <div id="status-display-container" class="flex flex-col items-center space-y-4">
-            <div id="counting-animation-container" class="relative w-40 h-40 flex items-center justify-center">
-                <span id="coin-icon" class="coin-icon absolute">$</span>
-            </div>
-            <h2 id="status-message" class="text-2xl font-semibold text-gray-700 mt-4">Connecting to Kiosk... </h2>
-        </div>
-        <div class="text-6xl font-extrabold text-gray-900" id="gross-display">$0.00</div>
-        <p class="text-sm text-gray-500 mt-2">Gross Deposit</p>
-        <div class="w-full space-y-4 bg-gray-50 p-6 rounded-2xl shadow-inner border border-gray-200">
-            <h3 class="text-lg font-bold text-gray-800 mb-2">Transaction Breakdown</h3>
-            <div class="flex justify-between items-center text-sm text-gray-600">
-                <span>Gross Deposit:</span><span id="gross-deposit-final" class="font-medium text-gray-800">$0.00</span>
-            </div>
-            <div id="rare-coin-bonus-row" class="flex justify-between items-center text-sm text-green-500 hidden">
-                <span>Rare Coin Bonus:</span><span id="rare-coin-bonus-display" class="font-medium">+$0.00</span>
-            </div>
-            <div class="flex justify-between items-center text-sm text-red-500">
-                <span>Service Fee (<span id="fee-percentage">5%</span>):</span><span id="service-fee-display" class="font-medium">-$0.00</span>
-            </div>
-            <div class="flex justify-between items-center text-xl font-bold text-gray-900 pt-4 border-t border-gray-200">
-                <span>Net Credit:</span><span id="net-credit-display" class="text-indigo-600">$0.00</span>
-            </div>
-        </div>
-        <button id="transfer-button" class="w-full px-6 py-4 bg-indigo-600 text-white font-semibold text-lg rounded-full shadow-lg hover:bg-indigo-700 transition-all transform hover:scale-105 hidden">
-            Transfer Credit to Wallet
-        </button>
-    </div>
+<button id="view-history-button" class="w-[92%] px-4 py-4 bg-white text-gray-900 rounded-2xl shadow-sm ring-1 ring-gray-200 hover:shadow-md hover:ring-gray-300 transition-all flex items-center justify-between mt-6">
+<span class="flex items-center gap-3">
+<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-indigo-600" viewBox="0 0 24 24" fill="currentColor"><path d="M12 6a1 1 0 011 1v4.382l2.447 1.63a1 1 0 11-1.109 1.664l-3-2A1 1 0 0111 12V7a1 1 0 011-1z"/><path fill-rule="evenodd" d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm0-18C7.589 4 4 7.589 4 12s3.589 8 8 8 8-3.589 8-8-3.589-8-8-8z" clip-rule="evenodd"/></svg>
+<span class="font-semibold">Transaction History</span>
+</span>
+<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+</button>
+<button id="view-card-button" class="w-[92%] px-6 py-4 bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white font-semibold text-lg rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5">View Card</button>
+<button id="deposit-button" class="w-[92%] px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold text-lg rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5">Deposit Coins</button>
+<button id="go-to-kiosks-button" class="w-[92%] px-4 py-4 bg-white text-gray-900 rounded-2xl shadow-sm ring-1 ring-gray-200 hover:shadow-md hover:ring-gray-300 transition-all flex items-center justify-between">
+<span class="flex items-center gap-3">
+<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-sky-600" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.14 2 5 5.14 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.86-3.14-7-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/></svg>
+<span class="font-semibold">Find Kiosks</span>
+</span>
+<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+</button>
+</main>
 
-    <!-- Screen 3: Transfer Complete -->
-    <div id="screen-3" class="screen flex-col items-center justify-center text-center space-y-8">
-        <div id="checkmark-container" class="w-24 h-24 flex items-center justify-center bg-green-500 rounded-full animate-pop">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-16 h-16 text-white">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
-            </svg>
-        </div>
-        <h2 class="text-3xl font-bold text-gray-900">Transfer Complete! </h2>
-        <div class="w-full bg-gray-50 rounded-2xl p-6 shadow-sm border border-gray-200 text-left space-y-4">
-            <h3 class="text-lg font-bold text-gray-800 mb-2">Transaction Summary </h3>
-            <div class="space-y-3 text-sm">
-                <div class="flex justify-between"><span class="text-gray-500">Gross Deposit:</span><span id="receipt-gross" class="font-medium text-gray-800">$0.00</span></div>
-                <div class="flex justify-between"><span class="text-gray-500">Service Fee:</span><span id="receipt-fee" class="font-medium text-red-500">-$0.00</span></div>
-                <div class="flex justify-between items-center text-base font-bold text-gray-900 pt-2 border-t border-gray-200"><span class="text-gray-600">Net Credit:</span><span id="receipt-net-credit" class="text-indigo-600">$0.00</span></div>
-                <div class="flex justify-between items-center pt-2"><span class="text-gray-500">Transaction ID:</span><span id="receipt-tx-id" class="font-mono text-gray-800">#</span></div>
-                <div class="flex justify-between"><span class="text-gray-500">Timestamp:</span><span id="receipt-timestamp" class="font-medium text-gray-800"></span></div>
-            </div>
-        </div>
-        <button id="view-wallet-button" class="w-full px-6 py-4 bg-indigo-600 text-white font-semibold text-lg rounded-full shadow-lg hover:bg-indigo-700 transition-all transform hover:scale-105">
-            View Wallet
-        </button>
-    </div>
-    
-    <!-- Screen 4: View Card -->
-    <div id="screen-4" class="screen flex-col items-center justify-center text-center space-y-8">
-        <h1 class="text-3xl font-extrabold text-gray-900 mb-6">Your Digital Card</h1>
-        
-        <div class="koin-card hover:scale-[1.02] active:scale-[0.98]">
-            <div class="koin-card-content">
-                <!-- Top Section -->
-                <div class="flex justify-between items-start">
-                    <span class="text-3xl font-black tracking-widest leading-none">KOIN</span>
-                    <!-- Chip SVG -->
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8 text-yellow-300">
-                        <rect x="2" y="7" width="20" height="10" rx="2" ry="2"></rect>
-                        <line x1="8" y1="7" x2="8" y2="17"></line>
-                        <line x1="16" y1="7" x2="16" y2="17"></line>
-                        <line x1="12" y1="7" x2="12" y2="17"></line>
-                        <line x1="2" y1="12" x2="22" y2="12"></line>
-                    </svg>
-                </div>
+<!-- Screen 1: Find Kiosks -->
+<section id="screen-1" class="screen animate-enter items-center text-center space-y-5" role="region" aria-label="Find Kiosks">
+<h1 class="text-3xl font-extrabold text-gray-900">Find Kiosks</h1>
+<p class="text-base text-gray-600">Find a Koin Kiosk nearby</p>
+<iframe title="Koin kiosks map" src="https://storage.googleapis.com/maps-solutions-2fxrm56wcn/locator-plus/kbwo/locator-plus.html" loading="lazy" class="rounded-2xl shadow-md border-2 border-indigo-200 w-full h-72" style="border:0;"></iframe>
+<div class="w-full space-y-3">
+<button id="scan-button" class="w-full px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold text-lg rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5">Scan Kiosk QR Code</button>
+<button id="back-home-from-kiosks" class="w-full px-6 py-3 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200">Back</button>
+</div>
+</section>
+<!-- Bottom Navigation -->
+<nav class="absolute bottom-0 left-0 right-0 px-4 pb-4">
+<div class="mx-auto max-w-sm bg-indigo-600 dark:bg-indigo-700 rounded-2xl shadow-lg">
+<div class="grid grid-cols-5 text-xs text-white">
+<button id="nav-home" class="py-3 flex flex-col items-center gap-1 hover:text-indigo-200">
+<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12l9-9 9 9"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 21V9h6v12"/></svg>
+Home
+</button>
+<button id="nav-deposit" class="py-3 flex flex-col items-center gap-1 hover:text-indigo-200">
+<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3a9 9 0 100 18 9 9 0 000-18Zm.75 4.5a.75.75 0 00-1.5 0V9H9a.75.75 0 000 1.5h2.25V15a.75.75 0 001.5 0v-4.5H15A.75.75 0 0015 9h-2.25V7.5Z"/></svg>
+Deposit
+</button>
+<button id="nav-history" class="py-3 flex flex-col items-center gap-1 hover:text-indigo-200">
+<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 6a1 1 0 011 1v4.382l2.447 1.63a1 1 0 11-1.109 1.664l-3-2A1 1 0 0111 12V7a1 1 0 011-1z"/><path fill-rule="evenodd" d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm0-18C7.589 4 4 7.589 4 12s3.589 8 8 8 8-3.589 8-8-3.589-8-8-8z" clip-rule="evenodd"/></svg>
+History
+</button>
+<button id="nav-card" class="py-3 flex flex-col items-center gap-1 hover:text-indigo-200">
+<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M3 7a2 2 0 012-2h14a2 2 0 012 2v2H3V7zm0 4h18v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6z"/></svg>
+Card
+</button>
+<button id="nav-chat" class="py-3 flex flex-col items-center gap-1 hover:text-indigo-200">
+<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.477 3 2 6.582 2 11c0 2.008 1.012 3.832 2.667 5.166-.164 1.287-.783 2.76-1.557 3.741a.5.5 0 00.566.785c1.988-.568 3.63-1.495 4.741-2.305A12.9 12.9 0 0012 19c5.523 0 10-3.582 10-8s-4.477-8-10-8z"/></svg>
+Chat
+</button>
+</div>
+</div>
+</nav>
 
-                <!-- Middle Section - Card Number -->
-                <div class="text-3xl font-mono font-semibold tracking-wider drop-shadow-md">
-                    <span class="text-lg font-light text-gray-300 mr-2">••••</span> 4242 
-                    <span class="text-lg font-light text-gray-300 mx-1">••••</span> •••• 
-                    <span class="text-lg font-light text-gray-300 ml-1">••••</span> 0001
-                </div>
+<!-- Screen 2: Coin Counting -->
+<section id="screen-2" class="screen animate-enter items-center text-center space-y-6" role="region" aria-label="Deposit Progress">
+<div id="status-display-container" class="flex flex-col items-center space-y-3">
+<div id="counting-animation-container" class="relative w-28 h-28 flex items-center justify-center">
+<span id="coin-icon" class="coin-icon absolute" aria-hidden="true">$</span>
+</div>
+<h2 id="status-message" class="text-xl font-semibold text-gray-700 mt-2">Connecting to kiosk...</h2>
+</div>
+<div class="text-5xl font-extrabold text-gray-900" id="gross-display">$0.00</div>
+<p class="text-sm text-gray-500">Gross Deposit</p>
+<div class="w-full space-y-3 bg-gray-50 p-5 rounded-2xl shadow-inner border border-gray-200 text-left">
+<h3 class="text-lg font-bold text-gray-800 mb-1">Transaction Breakdown</h3>
+<div class="flex justify-between items-center text-sm text-gray-600">
+<span>Gross Deposit:</span><span id="gross-deposit-final" class="font-medium text-gray-800">$0.00</span>
+</div>
+<div id="rare-coin-bonus-row" class="flex justify-between items-center text-sm text-green-600 hidden">
+<span id="rare-coin-label">Resale Credit (Premium):</span><span id="rare-coin-bonus-display" class="font-medium">+$0.00</span>
+</div>
+<div class="flex justify-between items-center text-sm text-red-600">
+<span>Service Fee (<span id="fee-percentage">5%</span>):</span><span id="service-fee-display" class="font-medium">-$0.00</span>
+</div>
+<div class="flex justify-between items-center text-xl font-bold text-gray-900 pt-3 border-t border-gray-200">
+<span>Net Credit:</span><span id="net-credit-display" class="text-indigo-600">$0.00</span>
+</div>
+</div>
+<button id="transfer-button" class="w-full px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold text-lg rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 hidden">Transfer Credit to Wallet</button>
+</section>
 
-                <!-- Bottom Section - Name and Expiry -->
-                <div class="flex justify-between items-center text-sm font-medium">
-                    <div class="flex flex-col text-left">
-                        <span class="text-xs text-gray-300 uppercase">Card Holder</span>
-                        <span class="text-lg tracking-wider">JANE DOE</span>
-                    </div>
-                    <div class="flex flex-col text-right">
-                        <span class="text-xs text-gray-300 uppercase">Expires</span>
-                        <span class="text-lg">12/28</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="w-full p-4 bg-gray-50 rounded-xl shadow-inner border border-gray-200 text-left space-y-3">
-             <div class="text-sm text-gray-600 flex justify-between"><span>CVV:</span> <span class="font-mono text-gray-900 font-semibold">123</span></div>
-             <div class="text-sm text-gray-600 flex justify-between"><span>Status:</span> <span class="font-semibold text-green-600">Active</span></div>
-             <div class="text-sm text-gray-600 flex justify-between"><span>Card Type:</span> <span class="font-semibold text-gray-900">Virtual Prepaid</span></div>
-        </div>
-        
-        <button onclick="KoinApp.showMessage('Card successfully copied to clipboard! (Prototype functionality)')" class="w-full px-6 py-4 bg-indigo-600 text-white font-semibold text-lg rounded-full shadow-lg hover:bg-indigo-700 transition-all transform hover:scale-105">
-            Copy Card Details
-        </button>
-    </div>
+<!-- Screen 3: Transfer Complete -->
+<section id="screen-3" class="screen animate-enter items-center text-center space-y-6" role="region" aria-label="Transfer Complete Receipt">
+<div id="checkmark-container" class="w-20 h-20 flex items-center justify-center bg-green-500 rounded-full animate-pop">
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-12 h-12 text-white"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+</div>
+<h2 class="text-2xl font-bold text-gray-900">Transfer Complete!</h2>
+<div class="w-full bg-gray-50 rounded-2xl p-5 shadow-sm border border-gray-200 text-left space-y-3">
+<h3 class="text-lg font-bold text-gray-800 mb-1">Transaction Summary</h3>
+<div class="space-y-2 text-sm">
+<div class="flex justify-between"><span class="text-gray-500">Gross Deposit:</span><span id="receipt-gross" class="font-medium text-gray-800">$0.00</span></div>
+<div id="receipt-bonus-row" class="flex justify-between hidden"><span id="receipt-bonus-label" class="text-gray-500">Resale Credit (Premium):</span><span id="receipt-bonus" class="font-medium text-green-600">+$0.00</span></div>
+<div class="flex justify-between"><span class="text-gray-500">Service Fee:</span><span id="receipt-fee" class="font-medium text-red-600">-$0.00</span></div>
+<div class="flex justify-between items-center text-base font-bold text-gray-900 pt-2 border-t border-gray-200"><span class="text-gray-600">Net Credit:</span><span id="receipt-net-credit" class="text-indigo-600">$0.00</span></div>
+<div class="flex justify-between items-center pt-1"><span class="text-gray-500">Transaction ID:</span><span id="receipt-tx-id" class="font-mono text-gray-800">#</span></div>
+<div class="flex justify-between"><span class="text-gray-500">Timestamp:</span><span id="receipt-timestamp" class="font-medium text-gray-800"></span></div>
+</div>
+</div>
+<button id="view-wallet-button" class="w-full px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold text-lg rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5">View Wallet</button>
+</section>
 
-    <!-- Screen 5: Transaction History (NEW) -->
-    <div id="screen-5" class="screen flex-col space-y-6">
-        <h1 class="text-3xl font-extrabold text-gray-900 mb-2">Transaction History</h1>
-        <div id="history-list" class="flex flex-col space-y-3 overflow-y-auto flex-grow h-full max-h-[70vh]">
-            <p id="no-history-message" class="text-center text-gray-500 italic mt-8">No coin deposits recorded yet. Time to get counting!</p>
-        </div>
-    </div>
+<!-- Screen 4: View Card -->
+<section id="screen-4" class="screen animate-enter items-center text-center space-y-6" role="region" aria-label="Digital Card">
+<h1 class="text-2xl font-extrabold text-gray-900">Your Digital Card</h1>
+<div class="koin-card hover:scale-[1.02] active:scale-[0.98]" role="img" aria-label="Koin virtual card">
+<div class="koin-card-content">
+<div class="flex justify-between items-start">
+<span class="text-3xl font-black tracking-widest leading-none">KOIN</span>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8 text-yellow-300" aria-hidden="true"><rect x="2" y="7" width="20" height="10" rx="2" ry="2"></rect><line x1="8" y1="7" x2="8" y2="17"></line><line x1="16" y1="7" x2="16" y2="17"></line><line x1="12" y1="7" x2="12" y2="17"></line><line x1="2" y1="12" x2="22" y2="12"></line></svg>
+</div>
+<div class="text-2xl font-mono font-semibold tracking-wider drop-shadow-md select-text">
+<span class="text-lg font-light text-gray-300 mr-1">••••</span> 4242 <span class="text-lg font-light text-gray-300 mx-1">••••</span> •••• <span class="text-lg font-light text-gray-300 ml-1">••••</span> 0001
+</div>
+<div class="flex justify-between items-center text-sm font-medium">
+<div class="flex flex-col text-left">
+<span class="text-xs text-gray-300 uppercase">Card Holder</span>
+<span id="card-holder" class="text-lg tracking-wider">JANE DOE</span>
+</div>
+<div class="flex flex-col text-right">
+<span class="text-xs text-gray-300 uppercase">Expires</span>
+<span id="card-exp" class="text-lg">12/28</span>
+</div>
+</div>
+</div>
+</div>
+<div class="w-full p-4 bg-gray-50 rounded-xl shadow-inner border border-gray-200 text-left space-y-2">
+<div class="text-sm text-gray-600 flex justify-between"><span>CVV:</span> <span id="card-cvv" class="font-mono text-gray-900 font-semibold">123</span></div>
+<div class="text-sm text-gray-600 flex justify-between"><span>Status:</span> <span class="font-semibold text-green-600">Active</span></div>
+<div class="text-sm text-gray-600 flex justify-between"><span>Card Type:</span> <span class="font-semibold text-gray-900">Virtual Prepaid</span></div>
+</div>
+<button id="copy-card-btn" class="w-[92%] px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold text-lg rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5">Copy Card Details</button>
+</section>
+
+<!-- Screen 5: Transaction History -->
+<section id="screen-5" class="screen animate-enter flex-col space-y-4" role="region" aria-label="Transaction History">
+<div class="flex items-center justify-between">
+<h1 class="text-2xl font-extrabold text-gray-900">Transaction History</h1>
+<button id="clear-history-btn" class="text-sm text-red-600 underline">Clear</button>
+</div>
+<div id="history-list" class="flex flex-col gap-3 overflow-y-auto flex-grow max-h-[65vh]">
+<div class="flex items-center justify-end pr-1">
+<button id="export-history-btn" class="text-sm text-indigo-600 underline">Export CSV</button>
+</div>
+<p id="no-history-message" class="text-center text-gray-500 italic mt-2">No coin deposits recorded yet. Time to get counting!</p>
+</div>
+</section>
 </div>
 
 <!-- AI Chat Modal -->
-<div id="ai-chat-modal" class="ai-chat-modal">
-    <div class="chat-box">
-        <div class="flex justify-between items-center p-4 border-b border-gray-200">
-            <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
-                <span class="text-3xl">$</span>
-                AI Support
-            </h3>
-            <button id="close-chat-button" class="text-gray-500 hover:text-gray-800 transition-colors">✖</button>
-        </div>
-        <div id="chat-messages" class="chat-messages">
-            <div class="chat-message ai">Hi! I'm your Koin AI assistant. Ask me about **deposits**, **kiosks**, **fees**, or **premium** to get a quick answer.</div>
-        </div>
-        <div class="p-4 border-t border-gray-200 flex items-center space-x-2">
-            <input id="chat-input" type="text" placeholder="Type your message..." class="flex-grow rounded-full border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-            <button id="chat-send-button" class="bg-indigo-600 text-white p-2 rounded-full hover:bg-indigo-700">➡</button>
-        </div>
-    </div>
+<div id="ai-chat-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="ai-chat-title" aria-hidden="true">
+<div class="modal-box chat-box">
+<div class="flex justify-between items-center p-4 border-b border-gray-200">
+<div class="flex items-center gap-3">
+<div class="ai-avatar" aria-hidden="true">K</div>
+<div class="leading-tight">
+<div class="text-base font-bold text-gray-900">Koin Assistant</div>
+<div id="ai-status" class="text-xs text-gray-500">AI: Connecting…</div>
+</div>
+</div>
+<button id="close-chat-button" class="text-gray-500 hover:text-gray-800 transition-colors" aria-label="Close chat">✖</button>
+</div>
+<div id="chat-messages" class="chat-messages" tabindex="0">
+<div id="chat-welcome" class="chat-message ai">Hi — I’m Koin Assistant. Ask about fees, kiosks, cards, premium, or history.</div>
+</div>
+<div class="px-3 pb-2 flex gap-2 flex-wrap">
+<button class="text-xs bg-gray-100 px-2 py-1 rounded" data-chat-suggest="What are the fees?" type="button">Fees</button>
+<button class="text-xs bg-gray-100 px-2 py-1 rounded" data-chat-suggest="How to find a kiosk?" type="button">Kiosk</button>
+<button class="text-xs bg-gray-100 px-2 py-1 rounded" data-chat-suggest="Tell me about Premium" type="button">Premium</button>
+<button class="text-xs bg-gray-100 px-2 py-1 rounded" data-chat-suggest="Where is my card?" type="button">Card</button>
+</div>
+<form id="chat-form" class="p-3 border-t border-gray-200 flex gap-2" autocomplete="off">
+<input id="chat-input" class="flex-1 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Type a message..." aria-label="Chat input" />
+<button class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">Send</button>
+</form>
+</div>
 </div>
 
 <!-- Subscription Modal -->
-<div id="subscription-modal" class="subscription-modal">
-    <div class="modal-box p-6 space-y-6">
-        <div class="flex justify-between items-center">
-            <h3 class="text-2xl font-bold text-gray-900">Choose your plan</h3>
-            <button id="close-subscription-modal-button" class="text-gray-500 hover:text-gray-800 transition-colors">✖</button>
-        </div>
-        <div class="space-y-4">
-            <div class="p-4 rounded-xl border-2 border-indigo-200 bg-indigo-50 text-center space-y-2">
-                <h4 class="text-xl font-bold text-indigo-800">Premium Tier</h4>
-                <p class="text-lg text-indigo-600 font-semibold">$1.00 / month</p>
-                <p class="text-sm text-gray-600">Reduced 2% fee on all deposits and unlocks rare coin detection feature.</p>
-                <button id="premium-tier-button" class="mt-2 w-full px-6 py-3 bg-indigo-600 text-white font-semibold rounded-full hover:bg-indigo-700 transition-colors">Select Premium</button>
-            </div>
-            <div class="p-4 rounded-xl border-2 border-gray-200 bg-gray-50 text-center space-y-2">
-                <h4 class="text-xl font-bold text-gray-800">Free Tier</h4>
-                <p class="text-lg text-gray-600 font-semibold">$0.00 / month</p>
-                <p class="text-sm text-gray-500">Standard 5% fee on all deposits. Basic features included.</p>
-                <button id="free-tier-button" class="mt-2 w-full px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-full hover:bg-gray-300 transition-colors">Select Free</button>
-            </div>
-        </div>
-    </div>
+<div id="subscription-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="subscription-title" aria-hidden="true">
+<div class="modal-box">
+<div class="flex justify-between items-center p-4 border-b border-gray-200">
+<h3 id="subscription-title" class="text-xl font-bold text-gray-900">Subscription</h3>
+<button id="close-subscription-button" class="text-gray-500 hover:text-gray-800 transition-colors" aria-label="Close subscription">✖</button>
+</div>
+<div class="p-4 space-y-4">
+<p class="text-sm text-gray-600">Choose your plan. Premium lowers fees and unlocks perks.</p>
+<div class="space-y-2">
+<label class="flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-gray-50">
+<input type="radio" name="plan" value="free" class="accent-indigo-600" />
+<div class="flex-1">
+<div class="font-semibold text-gray-900">Free</div>
+<div class="text-sm text-gray-600">5% fee per deposit</div>
+</div>
+<span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">Current</span>
+</label>
+<label class="flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-gray-50">
+<input type="radio" name="plan" value="premium" class="accent-indigo-600" />
+<div class="flex-1">
+<div class="font-semibold text-gray-900">Premium</div>
+<div class="text-sm text-gray-600">2% fee + priority support</div>
+</div>
+<span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Popular</span>
+</label>
+</div>
+</div>
+<div class="p-4 border-t border-gray-200 flex gap-2">
+<button id="save-plan-button" class="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">Save</button>
+<button id="cancel-plan-button" class="flex-1 bg-gray-100 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-200">Cancel</button>
+</div>
+</div>
 </div>
 
+<!-- Settings Modal -->
+<div id="settings-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="settings-title" aria-hidden="true">
+<div class="modal-box">
+<div class="flex justify-between items-center p-4 border-b border-gray-200">
+<h3 id="settings-title" class="text-xl font-bold text-gray-900">Settings</h3>
+<button id="close-settings-button" class="text-gray-500 hover:text-gray-800 transition-colors" aria-label="Close settings">✖</button>
+</div>
+<div class="p-4 space-y-4">
+<div>
+<label class="text-sm font-semibold" for="holder-input">Card Holder Name</label>
+<input id="holder-input" class="mt-1 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Enter name" />
+<button id="save-holder" class="mt-2 bg-indigo-600 text-white px-3 py-2 rounded-lg hover:bg-indigo-700">Save Name</button>
+</div>
+<div class="pt-2 border-t border-gray-200">
+<div class="text-sm font-semibold mb-1">AI Chat (optional)</div>
+<label class="text-xs text-gray-600 block mb-1" for="ai-endpoint-input">AI endpoint (server proxy or OpenAI)</label>
+<input id="ai-endpoint-input" class="w-full border rounded-lg px-3 py-2 mb-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="/api/chat or https://api.openai.com/v1/chat/completions" />
+<label class="text-xs text-gray-600 block mb-1" for="ai-key-input">API Key</label>
+<input id="ai-key-input" type="password" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="sk-..." />
+<button id="save-ai" class="mt-2 bg-indigo-600 text-white px-3 py-2 rounded-lg hover:bg-indigo-700">Save AI Settings</button>
+</div>
+<div class="pt-2 border-t border-gray-200">
+<button id="reset-app" class="text-red-600 underline">Reset App Data</button>
+</div>
+</div>
+<div class="p-4 border-t border-gray-200 flex gap-2">
+<button id="close-settings-footer" class="flex-1 bg-gray-100 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-200">Close</button>
+</div>
+</div>
+</div>
+
+<!-- Checkout Modal (Mock) -->
+<div id="checkout-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="checkout-title" aria-hidden="true">
+<div class="modal-box">
+<div class="flex justify-between items-center p-4 border-b border-gray-200">
+<h3 id="checkout-title" class="text-xl font-bold text-gray-900">Confirm Purchase</h3>
+<button id="close-checkout-button" class="text-gray-500 hover:text-gray-800 transition-colors" aria-label="Close checkout">✖</button>
+</div>
+<div class="p-4 space-y-2">
+<div class="flex items-center justify-between">
+<div>
+<div class="font-semibold text-gray-900">Premium Plan</div>
+<div class="text-sm text-gray-600">2% fee, priority support</div>
+</div>
+<div class="text-lg font-bold text-gray-900">$2.99/mo</div>
+</div>
+<p class="text-xs text-gray-500">This is a demo purchase. No real payment is processed.</p>
+</div>
+<div class="p-4 border-t border-gray-200 flex gap-2">
+<button id="confirm-purchase-button" class="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">Confirm Purchase</button>
+<button id="cancel-purchase-button" class="flex-1 bg-gray-100 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-200">Cancel</button>
+</div>
+</div>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
 <script>
-    const KoinApp = (() => {
-        // --- State and Element References ---
-        const appState = {
-            walletBalance: 0,
-            history: [], // ADDED: Array to store transaction history
-            subscriptionStatus: 'Free Tier',
-            lastPaymentDate: null,
-            currentScreen: 0,
-            grossDeposit: 0,
-            serviceFee: 0,
-            netCredit: 0,
-            transactionId: '',
-            transactionTimestamp: null,
-            isCounting: false,
-            rareCoinFound: null,
-            isChatOpen: false,
-            isAiTyping: false,
-            serviceFeeRate: 0.05 // Initial Fee Rate
-        };
-        let coinCountingIntervalId = null;
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => Array.from(document.querySelectorAll(sel));
 
-        const elements = {
-            screens: document.querySelectorAll('.screen'),
-            walletBalanceDisplay: document.getElementById('wallet-balance'),
-            subscriptionStatusButton: document.getElementById('subscription-status-button'),
-            depositButton: document.getElementById('deposit-button'),
-            goToKiosksButton: document.getElementById('go-to-kiosks-button'),
-            scanButton: document.getElementById('scan-button'),
-            transferButton: document.getElementById('transfer-button'),
-            viewWalletButton: document.getElementById('view-wallet-button'),
-            backButton: document.getElementById('back-button'),
-            helpButton: document.getElementById('help-button'),
-            grossDisplay: document.getElementById('gross-display'),
-            statusMessage: document.getElementById('status-message'),
-            coinIcon: document.getElementById('coin-icon'),
-            grossDepositFinal: document.getElementById('gross-deposit-final'),
-            feePercentage: document.getElementById('fee-percentage'),
-            serviceFeeDisplay: document.getElementById('service-fee-display'),
-            netCreditDisplay: document.getElementById('net-credit-display'),
-            receiptGross: document.getElementById('receipt-gross'),
-            receiptFee: document.getElementById('receipt-fee'),
-            receiptNetCredit: document.getElementById('receipt-net-credit'),
-            receiptTxId: document.getElementById('receipt-tx-id'),
-            receiptTimestamp: document.getElementById('receipt-timestamp'),
-            aiChatModal: document.getElementById('ai-chat-modal'),
-            closeChatButton: document.getElementById('close-chat-button'),
-            chatInput: document.getElementById('chat-input'),
-            chatSendButton: document.getElementById('chat-send-button'),
-            chatMessages: document.getElementById('chat-messages'),
-            statusDisplayContainer: document.getElementById('status-display-container'),
-            aiTypingIndicator: document.getElementById('ai-typing-indicator'),
-            subscriptionModal: document.getElementById('subscription-modal'),
-            closeSubscriptionModalButton: document.getElementById('close-subscription-modal-button'),
-            freeTierButton: document.getElementById('free-tier-button'),
-            premiumTierButton: document.getElementById('premium-tier-button'),
-            rareCoinBonusDisplay: document.getElementById('rare-coin-bonus-display'),
-            rareCoinBonusRow: document.getElementById('rare-coin-bonus-row'),
-            viewCardButton: document.getElementById('view-card-button'),
-            // ADDED: History elements
-            viewHistoryButton: document.getElementById('view-history-button'),
-            historyList: document.getElementById('history-list'),
-            noHistoryMessage: document.getElementById('no-history-message')
-        };
-        
-        // Hardcoded list of rare coins and their values for the app demo
-        const rareCoins = [
-            { coinType: 'pennies', value: 0.01, rareValue: 50.00, name: '1909-S VDB Lincoln Cent' },
-            { coinType: 'nickels', value: 0.05, rareValue: 150.00, name: '1937-D Three-Legged Buffalo Nickel' },
-            { coinType: 'dimes', value: 0.10, rareValue: 100.00, name: '1916-D Mercury Dime' },
-            { coinType: 'quarters', value: 0.25, rareValue: 200.00, name: '1932-S Washington Quarter' },
-        ];
-        
-        // --- Core App Functions ---
-        const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-        const formatCurrency = (amount) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
-        
-        // Expose showMessage globally for inline HTML button
-        window.KoinApp = { showMessage: showMessage };
+const fmt = (cents) => (cents/100).toLocaleString(undefined,{style:'currency',currency:'USD'});
+const clamp = (n, a, b) => Math.min(Math.max(n,a), b);
+const nowIso = () => new Date().toISOString();
+const uid = () => Math.random().toString(36).slice(2,10);
 
-        function showMessage(message, type = 'info') {
-            const modal = document.createElement('div');
-            modal.className = `fixed inset-0 flex items-center justify-center z-[100] p-4 bg-black bg-opacity-40 transition-opacity duration-300`;
-            modal.innerHTML = `
-                <div class="bg-white rounded-xl shadow-2xl p-6 text-center max-w-sm w-full animate-pop">
-                    <p class="font-medium text-lg mb-4 text-gray-800">${message}</p>
-                    <button class="bg-indigo-600 text-white px-6 py-2 rounded-full font-semibold hover:bg-indigo-700 transition-colors" onclick="this.parentNode.parentNode.remove()">OK</button>
-                </div>
-            `;
-            document.body.appendChild(modal);
-        }
+const storage = {
+get(key, fallback) {
+try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch { return fallback; }
+},
+set(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+},
+};
 
-        const getCoinEmoji = (coinType) => {
-            switch (coinType) {
-                case 'quarters': return '🪙';
-                case 'dimes': return '💲';
-                case 'nickels': return '✨';
-                case 'pennies': return '💵';
-                default: return '💰';
-            }
-        };
+const KoinApp = {
+state: {
+screen: 'screen-0',
+backStack: [],
+subscription: 'free',
+feePercent: 5,
+walletCents: 0,
+pending: null,
+history: [],
+aiOnline: false,
+},
 
-        const switchScreen = (screenNumber) => {
-            elements.screens.forEach(screen => screen.classList.remove('active'));
-            document.getElementById(`screen-${screenNumber}`).classList.add('active');
-            appState.currentScreen = screenNumber;
-            // Back button visible for all screens except home (0)
-            elements.backButton.classList.toggle('hidden', screenNumber === 0); 
-        };
+init() {
+// Load persisted state
+const sub = storage.get('koin.subscription', 'free');
+const premiumActive = storage.get('koin.premiumActive', false) === true;
+// Enforce Free by default unless Premium is actively purchased
+this.state.subscription = (sub === 'premium' && premiumActive) ? 'premium' : 'free';
+if (this.state.subscription === 'free') {
+if (sub !== 'free') storage.set('koin.subscription', 'free');
+// Clear any stale premium flag to guarantee checkout prompt later
+if (premiumActive !== false) storage.set('koin.premiumActive', false);
+}
+this.state.feePercent = this.state.subscription === 'premium' ? 2 : 5;
+this.state.walletCents = storage.get('koin.walletBalance', 0);
+this.state.history = storage.get('koin.history', []);
 
-        const updateWalletUI = () => {
-            elements.walletBalanceDisplay.textContent = formatCurrency(appState.walletBalance);
-            elements.subscriptionStatusButton.textContent = appState.subscriptionStatus;
-            
-            const freeFee = 0.05; // 5% fee for Free Tier
-            const premiumFee = 0.02; // 2% fee for Premium Tier
-            
-            if (appState.subscriptionStatus === 'Free Tier') {
-                appState.serviceFeeRate = freeFee;
-                elements.feePercentage.textContent = '5%';
-                elements.premiumTierButton.textContent = 'Select Premium';
-                elements.premiumTierButton.disabled = false;
-                elements.freeTierButton.textContent = 'Current Plan';
-                elements.freeTierButton.disabled = true;
-            } else if (appState.subscriptionStatus === 'Premium Tier') {
-                appState.serviceFeeRate = premiumFee;
-                elements.feePercentage.textContent = '2%';
-                elements.premiumTierButton.textContent = 'Current Plan';
-                elements.premiumTierButton.disabled = true;
-                elements.freeTierButton.textContent = 'Downgrade to Free';
-                elements.freeTierButton.disabled = false;
-            }
-        };
+this.updateSubscriptionUI();
+this.updateBalanceUI();
+this.bindEvents();
+this.probeAI();
+// Re-probe AI periodically
+setInterval(() => this.probeAI(), 10000);
 
-        const updateDisplay = () => {
-            elements.grossDisplay.textContent = formatCurrency(appState.grossDeposit);
-            elements.grossDepositFinal.textContent = formatCurrency(appState.grossDeposit);
-            elements.serviceFeeDisplay.textContent = `-${formatCurrency(appState.serviceFee)}`;
-            elements.netCreditDisplay.textContent = formatCurrency(appState.netCredit);
-            
-            if (appState.rareCoinFound) {
-                elements.rareCoinBonusDisplay.textContent = `+${formatCurrency(appState.rareCoinFound.rareValue)}`;
-                elements.rareCoinBonusRow.classList.remove('hidden');
-            } else {
-                elements.rareCoinBonusRow.classList.add('hidden');
-            }
-        };
+// Loading screen fade
+setTimeout(() => { const l = $('#loading-screen'); if(!l) return; l.style.opacity = '0'; setTimeout(() => l.remove(), 280); }, 450);
+},
 
-        const stopCoinCounting = () => {
-            if (coinCountingIntervalId) {
-                clearInterval(coinCountingIntervalId);
-                coinCountingIntervalId = null;
-            }
-        };
+bindEvents() {
+$('#help-button').addEventListener('click', () => this.openChat());
+$('#close-chat-button').addEventListener('click', () => this.closeChat());
+$('#chat-form').addEventListener('submit', (e) => { e.preventDefault(); this.sendChatMessage(); });
 
-        const simulateCoinCounting = () => {
-            stopCoinCounting();
-            
-            appState.isCounting = true;
-            appState.rareCoinFound = null; // Reset rare coin status
-            elements.transferButton.classList.add('hidden');
-            elements.statusDisplayContainer.classList.remove('hidden');
-            elements.statusMessage.textContent = "Start inserting coins.";
+$('#subscription-status-button').addEventListener('click', () => this.openSubscription());
+$('#close-subscription-button').addEventListener('click', () => this.closeSubscription());
+$('#cancel-plan-button').addEventListener('click', () => this.closeSubscription());
+$('#save-plan-button').addEventListener('click', () => this.savePlan());
+$('#close-checkout-button').addEventListener('click', () => this.closeCheckout());
+$('#cancel-purchase-button').addEventListener('click', () => this.closeCheckout());
+$('#confirm-purchase-button').addEventListener('click', () => this.confirmPurchase());
+$('#save-ai').addEventListener('click', () => this.saveAI());
+$('#settings-button').addEventListener('click', () => this.openSettings());
+$('#close-settings-button').addEventListener('click', () => this.closeSettings());
+$('#close-settings-footer').addEventListener('click', () => this.closeSettings());
+$('#save-holder').addEventListener('click', () => this.saveHolder());
+$('#reset-app').addEventListener('click', () => this.resetApp());
 
-            const coinValues = {
-                'quarters': 0.25, 'dimes': 0.10, 'nickels': 0.05, 'pennies': 0.01
-            };
-            const coinTypes = Object.keys(coinValues);
-            const coinMix = {};
-            coinTypes.forEach(type => {
-                coinMix[type] = getRandomInt(10, 30);
-            });
+$('#view-card-button').addEventListener('click', () => this.navigateTo('screen-4'));
+$('#view-history-button').addEventListener('click', () => { this.renderHistory(); this.navigateTo('screen-5'); });
+$('#clear-history-btn').addEventListener('click', () => this.clearHistory());
+$('#export-history-btn').addEventListener('click', () => this.exportHistoryCSV());
+$('#deposit-button').addEventListener('click', () => { this.navigateTo('screen-2'); this.startCountingSimulation(); });
+$('#go-to-kiosks-button').addEventListener('click', () => this.navigateTo('screen-1'));
+$('#back-home-from-kiosks').addEventListener('click', () => this.goBack());
+$('#scan-button').addEventListener('click', () => { this.showToast('Kiosk paired. Starting deposit...'); this.navigateTo('screen-2'); this.startCountingSimulation(); });
+$('#transfer-button').addEventListener('click', () => this.finalizeDeposit());
+$('#view-wallet-button').addEventListener('click', () => this.navigateTo('screen-0'));
+$('#copy-card-btn').addEventListener('click', () => this.copyCard());
+$('#back-button').addEventListener('click', () => this.goBack());
+// Bottom nav
+$('#nav-home').addEventListener('click', () => this.navigateTo('screen-0'));
+$('#nav-deposit').addEventListener('click', () => { this.navigateTo('screen-2'); this.startCountingSimulation(); });
+$('#nav-history').addEventListener('click', () => { this.renderHistory(); this.navigateTo('screen-5'); });
+$('#nav-card').addEventListener('click', () => this.navigateTo('screen-4'));
+$('#nav-chat').addEventListener('click', () => this.openChat());
 
-            const allCoins = Object.entries(coinMix).flatMap(([type, count]) => Array(count).fill(type));
-            const shuffledCoins = allCoins.sort(() => Math.random() - 0.5);
+document.addEventListener('keydown', (e) => {
+if (e.key === 'Escape') { this.closeChat(); this.closeSubscription(); this.closeSettings(); }
+if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+if (e.key.toLowerCase() === 'g') this.navigateTo('screen-0');
+if (e.key.toLowerCase() === 'h') { this.renderHistory(); this.navigateTo('screen-5'); }
+if (e.key.toLowerCase() === 'd') { this.navigateTo('screen-2'); this.startCountingSimulation(); }
+});
 
-            let coinIndex = 0;
+document.querySelectorAll('[data-chat-suggest]').forEach(btn => btn.addEventListener('click', () => {
+const t = btn.getAttribute('data-chat-suggest');
+$('#chat-input').value = t; this.sendChatMessage();
+}));
 
-            coinCountingIntervalId = setInterval(() => {
-                if (coinIndex >= shuffledCoins.length) {
-                    stopCoinCounting();
-                    appState.isCounting = false;
-                    elements.statusMessage.textContent = "Transaction Ready!";
-                    elements.transferButton.classList.remove('hidden');
-                    return;
-                }
+// Initialize persisted holder
+const holder = storage.get('koin.holder', 'JANE DOE');
+$('#card-holder').textContent = holder;
+// Initialize AI fields
+const ep = storage.get('koin.aiEndpoint', '/api/chat');
+const key = storage.get('koin.aiKey', '');
+if (document.getElementById('ai-endpoint-input')) document.getElementById('ai-endpoint-input').value = ep;
+if (document.getElementById('ai-key-input')) document.getElementById('ai-key-input').value = key;
+},
 
-                const coinType = shuffledCoins[coinIndex];
-                let coinValue = coinValues[coinType];
-                
-                // Check for rare coin if premium subscription is active
-                if (appState.subscriptionStatus === 'Premium Tier') {
-                    const isRare = Math.random() < 0.05; 
-                    if (isRare) {
-                        const foundRareCoin = rareCoins.find(c => c.coinType === coinType);
-                        if (foundRareCoin) {
-                            appState.rareCoinFound = foundRareCoin;
-                            coinValue += foundRareCoin.rareValue;
-                            showMessage(`Congratulations! You found a rare ${foundRareCoin.name} worth ${formatCurrency(foundRareCoin.rareValue)}!`, 'success');
-                        }
-                    }
-                }
+navigateTo(id) {
+if (this.state.screen !== id) this.state.backStack.push(this.state.screen);
+$$('#' + this.state.screen + ', #' + id).forEach(el => el && el.classList.add('animate-enter'));
+$$('#' + this.state.screen).forEach(el => el.classList.remove('active'));
+this.state.screen = id;
+$('#' + id).classList.add('active');
+// Back visibility
+if (id === 'screen-0') { $('#back-button').classList.add('hidden'); }
+else { $('#back-button').classList.remove('hidden'); }
+},
 
-                appState.grossDeposit += coinValue;
-                appState.grossDeposit = parseFloat(appState.grossDeposit.toFixed(2));
-                let bonus = appState.rareCoinFound ? appState.rareCoinFound.rareValue : 0;
-                let feeBase = appState.grossDeposit - bonus;
-                
-                // Fee is only applied to the coin deposit, not the rare coin bonus
-                appState.serviceFee = parseFloat((feeBase * appState.serviceFeeRate).toFixed(2));
-                appState.netCredit = parseFloat((appState.grossDeposit + (appState.rareCoinFound ? appState.rareCoinFound.rareValue : 0) - appState.serviceFee).toFixed(2));
-                
-                elements.coinIcon.textContent = getCoinEmoji(coinType);
-                elements.coinIcon.classList.add('pop');
-                setTimeout(() => elements.coinIcon.classList.remove('pop'), 200);
+exportHistoryCSV() {
+if (!this.state.history.length) return this.showToast('No history to export');
+const headers = ['id','timestamp','gross_cents','fee_cents','resale_cents','net_cents','kioskId'];
+const rows = this.state.history.map(tx => [tx.id, tx.timestamp, tx.gross, tx.fee, tx.resale || 0, tx.net, tx.kioskId]);
+const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+const blob = new Blob([csv], {type: 'text/csv'});
+const url = URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url; a.download = 'koin-history.csv'; a.click();
+URL.revokeObjectURL(url);
+},
 
-                updateDisplay();
-                coinIndex++;
-            }, 100);
-        };
+goBack() {
+const prev = this.state.backStack.pop();
+if (!prev) { this.navigateTo('screen-0'); return; }
+$$('#' + this.state.screen).forEach(el => el.classList.remove('active'));
+this.state.screen = prev; $('#' + prev).classList.add('active');
+if (prev === 'screen-0') $('#back-button').classList.add('hidden');
+},
 
-        const resetTransaction = () => {
-            appState.grossDeposit = 0;
-            appState.serviceFee = 0;
-            appState.netCredit = 0;
-            appState.rareCoinFound = null;
-            updateDisplay();
-        };
+updateBalanceUI() {
+$('#wallet-balance').textContent = fmt(this.state.walletCents);
+},
 
-        const handlePremiumPayment = () => {
-            if (appState.walletBalance >= 1) {
-                appState.walletBalance = parseFloat((appState.walletBalance - 1).toFixed(2));
-                
-                // ADDED: Record Subscription Payment Transaction
-                const premiumTx = {
-                    id: Math.random().toString(36).substring(2, 11).toUpperCase(),
-                    timestamp: new Date().toISOString(),
-                    gross: -1.00, // Cost of subscription
-                    fee: 0,
-                    net: -1.00,
-                    type: 'Premium Subscription',
-                    subscription: 'Premium Tier',
-                    bonus: 0,
-                    rareCoinName: null
-                };
-                appState.history.unshift(premiumTx);
+// Deposit simulation
+startCountingSimulation() {
+const icon = $('#coin-icon');
+const status = $('#status-message');
+const grossDisplay = $('#gross-display');
+const breakdownGross = $('#gross-deposit-final');
+const feeDisplay = $('#service-fee-display');
+const netDisplay = $('#net-credit-display');
+const feePctSpan = $('#fee-percentage');
+const bonusRow = $('#rare-coin-bonus-row');
+const bonusDisplay = $('#rare-coin-bonus-display');
+const bonusLabel = $('#rare-coin-label');
+const transferBtn = $('#transfer-button');
 
-                appState.subscriptionStatus = 'Premium Tier';
-                elements.subscriptionModal.classList.remove('visible');
-                updateWalletUI();
-                showMessage("Success! You're now a Premium member. Enjoy the 5% rare coin chance and reduced fees!", 'success');
-            } else {
-                showMessage("Insufficient funds to upgrade to Premium. You need at least $1.00.", 'error');
-            }
-        };
+feePctSpan.textContent = this.state.feePercent + '%';
+transferBtn.classList.add('hidden');
 
-        // ADDED: Function to render the history list
-        const renderHistory = () => {
-            elements.historyList.innerHTML = '';
-            
-            if (appState.history.length === 0) {
-                elements.historyList.innerHTML = '<p id="no-history-message" class="text-center text-gray-500 italic mt-8">No coin deposits recorded yet. Time to get counting!</p>';
-                return;
-            }
+// Randomized target and pacing for demo realism
+const targetCents = Math.round((Math.random()*45 + 5) * 100); // $5–$50
+const duration = Math.round(2500 + Math.random() * 3000); // 2.5s–5.5s
+const step = 80; // ms
+// Premium-only rare coin resale credit (not subject to fee)
+const isPremium = this.state.subscription === 'premium' && (storage.get('koin.premiumActive', false) === true);
+const rareChance = isPremium && Math.random() < 0.2; // 20% chance on premium
+let resaleCents = rareChance ? (Math.floor(Math.random()*5000)+1000) : 0; // $10.00–$60.00
+let cents = 0; let t = 0;
+bonusRow.classList.add('hidden');
 
-            appState.history.forEach(tx => {
-                const date = new Date(tx.timestamp).toLocaleString();
-                const isBonus = tx.bonus > 0;
-                const netColor = tx.net >= 0 ? 'text-green-600' : 'text-red-600';
-                const txType = tx.type === 'Coin Deposit' ? 'Coin Deposit' : 'Subscription';
+status.textContent = 'Connecting to kiosk...';
+setTimeout(() => status.textContent = 'Counting coins...', 700);
 
-                const txElement = document.createElement('div');
-                txElement.className = 'flex justify-between items-center p-4 rounded-xl bg-white shadow-sm border border-gray-100 transition-shadow hover:shadow-md';
-                txElement.innerHTML = `
-                    <div class="flex flex-col text-left">
-                        <span class="font-semibold text-gray-900 text-base">${tx.type}</span>
-                        <span class="text-xs text-gray-500">${date}</span>
-                        ${isBonus ? `<span class="text-xs text-green-500 font-medium">${tx.rareCoinName} Bonus</span>` : ''}
-                        <span class="text-xs text-gray-400 mt-1">ID: ${tx.id}</span>
-                    </div>
-                    <div class="flex flex-col text-right">
-                        <span class="text-lg font-bold ${netColor}">${formatCurrency(tx.net)}</span>
-                        <span class="text-xs text-gray-500">Net Value</span>
-                        ${tx.fee > 0 ? `<span class="text-xs text-red-500 mt-1">Fee: ${formatCurrency(tx.fee)}</span>` : ''}
-                    </div>
-                `;
-                elements.historyList.appendChild(txElement);
-            });
-        };
+const popInterval = setInterval(() => { icon.classList.toggle('pop'); }, 140);
+const interval = setInterval(() => {
+t += step;
+const p = clamp(t / duration, 0, 1);
+// Ease towards the target with subtle jitter
+const eased = p < 0.5 ? 2*p*p : -1 + (4 - 2*p)*p;
+const jitter = Math.sin(p * (10 + Math.random()*6)) * (targetCents * 0.01 * Math.random());
+cents = Math.min(targetCents, Math.max(0, Math.round(targetCents * eased + jitter)));
+grossDisplay.textContent = fmt(cents);
 
-        // --- AI Chat Logic ---
-        const addMessageToChat = (message, sender) => {
-            const messageDiv = document.createElement('div');
-            messageDiv.textContent = message;
-            messageDiv.classList.add('chat-message', sender);
-            elements.chatMessages.appendChild(messageDiv);
-            elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
-        };
+const fee = Math.round(cents * (this.state.feePercent/100));
+const net = Math.max(0, cents - fee);
+breakdownGross.textContent = fmt(cents);
+feeDisplay.textContent = '-' + fmt(fee).replace('-', '');
+netDisplay.textContent = fmt(net);
+if (resaleCents > 0) { bonusRow.classList.remove('hidden'); if (bonusLabel) bonusLabel.textContent = 'Resale Credit (Premium):'; bonusDisplay.textContent = '+' + fmt(resaleCents); }
 
-        const handleChatMessage = (userMessage) => {
-            addMessageToChat(userMessage, 'user');
-            const lowerCaseMessage = userMessage.toLowerCase();
-            let aiResponse = "I'm sorry, I don't understand that. Please ask about **deposits**, **kiosks**, **fees**, or **premium**.";
-            
-            if (lowerCaseMessage.includes('deposit')) {
-                aiResponse = "To make a deposit, navigate to the Find Kiosks screen and use the 'Scan Kiosk QR Code' button to begin the coin counting process.";
-            } else if (lowerCaseMessage.includes('kiosk')) {
-                aiResponse = "You can find the nearest Koin Kiosk on the map. Simply head to the 'Find Kiosks' screen from the home page.";
-            } else if (lowerCaseMessage.includes('fee')) {
-                aiResponse = `Koin charges a service fee on all deposits. It is ${appState.serviceFeeRate * 100}% for your current ${appState.subscriptionStatus}.`;
-            } else if (lowerCaseMessage.includes('premium')) {
-                aiResponse = "The Premium Tier subscription costs $1.00 per month. It reduces your service fee to 2% and unlocks the rare coin detection feature, which has a 5% chance of finding a bonus coin during a deposit!";
-            }
-            
-            setTimeout(() => {
-                addMessageToChat(aiResponse, 'ai');
-            }, 500);
-        };
+if (t >= duration) {
+clearInterval(interval); clearInterval(popInterval);
+icon.classList.remove('pop');
+status.textContent = 'Complete. Review and transfer ↘';
+transferBtn.classList.remove('hidden');
+// Ensure totals reflect exact target at completion
+const finalFee = Math.round(targetCents * (this.state.feePercent/100));
+const finalNet = Math.max(0, targetCents - finalFee);
+grossDisplay.textContent = fmt(targetCents);
+breakdownGross.textContent = fmt(targetCents);
+feeDisplay.textContent = '-' + fmt(finalFee).replace('-', '');
+netDisplay.textContent = fmt(finalNet);
+this.state.pending = { gross: targetCents, fee: finalFee, resale: resaleCents, net: finalNet, kioskId: 'SIM-' + uid() };
+if (resaleCents > 0) this.showToast('Rare coin found! Resale credit ' + fmt(resaleCents) + ' will be added.');
+}
+}, step);
+},
 
-        // --- Event Listeners ---
-        const setupEventListeners = () => {
-            // Screen switching
-            elements.depositButton.addEventListener('click', () => switchScreen(1));
-            elements.goToKiosksButton.addEventListener('click', () => switchScreen(1));
-            elements.viewCardButton.addEventListener('click', () => switchScreen(4));
-            
-            // ADDED: History Button Listener
-            elements.viewHistoryButton.addEventListener('click', () => {
-                renderHistory();
-                switchScreen(5);
-            });
-            
-            elements.scanButton.addEventListener('click', () => {
-                resetTransaction();
-                switchScreen(2);
-                setTimeout(() => {
-                    elements.statusMessage.textContent = "Start inserting coins.";
-                    simulateCoinCounting();
-                }, 2000);
-            });
+finalizeDeposit() {
+if (!this.state.pending) return;
+const tx = {
+id: 'TX-' + uid().toUpperCase(),
+timestamp: nowIso(),
+gross: this.state.pending.gross,
+fee: this.state.pending.fee,
+resale: this.state.pending.resale || 0,
+net: this.state.pending.net,
+kioskId: this.state.pending.kioskId,
+};
+this.state.walletCents += (tx.net + (tx.resale || 0));
+this.updateBalanceUI();
+storage.set('koin.walletBalance', this.state.walletCents);
+this.state.history.unshift(tx);
+storage.set('koin.history', this.state.history);
+this.state.pending = null;
 
-            elements.transferButton.addEventListener('click', () => {
-                stopCoinCounting();
-                appState.walletBalance += appState.netCredit;
-                appState.walletBalance = parseFloat(appState.walletBalance.toFixed(2));
-                appState.transactionId = Math.random().toString(36).substring(2, 11).toUpperCase();
-                appState.transactionTimestamp = new Date();
-                
-                // ADDED: Record Coin Deposit Transaction
-                const newTransaction = {
-                    id: appState.transactionId,
-                    timestamp: appState.transactionTimestamp.toISOString(),
-                    gross: appState.grossDeposit,
-                    fee: appState.serviceFee,
-                    net: appState.netCredit,
-                    type: 'Coin Deposit',
-                    subscription: appState.subscriptionStatus,
-                    bonus: appState.rareCoinFound ? appState.rareCoinFound.rareValue : 0,
-                    rareCoinName: appState.rareCoinFound ? appState.rareCoinFound.name : null
-                };
-                appState.history.unshift(newTransaction);
+// Populate receipt
+$('#receipt-gross').textContent = fmt(tx.gross);
+$('#receipt-fee').textContent = '-' + fmt(tx.fee).replace('-', '');
+$('#receipt-net-credit').textContent = fmt(tx.net);
+if (tx.resale > 0) { $('#receipt-bonus-row').classList.remove('hidden'); const lab = document.getElementById('receipt-bonus-label'); if (lab) lab.textContent = 'Resale Credit (Premium):'; $('#receipt-bonus').textContent = '+' + fmt(tx.resale); } else { $('#receipt-bonus-row').classList.add('hidden'); }
+$('#receipt-tx-id').textContent = tx.id;
+$('#receipt-timestamp').textContent = new Date(tx.timestamp).toLocaleString();
 
-                elements.receiptGross.textContent = formatCurrency(appState.grossDeposit);
-                elements.receiptFee.textContent = `-${formatCurrency(appState.serviceFee)}`;
-                elements.receiptNetCredit.textContent = formatCurrency(appState.netCredit);
-                elements.receiptTxId.textContent = `#${appState.transactionId}`;
-                elements.receiptTimestamp.textContent = appState.transactionTimestamp.toLocaleString();
-                updateWalletUI(); // Update final balance display
-                switchScreen(3);
-            });
+this.showToast('Transferred ' + fmt(tx.net) + ' to wallet');
+if (tx.resale > 0) {
+this.showToast('Rare coin resale credit added: ' + fmt(tx.resale));
+this.appendChat('ai', `Our kiosk flagged a rare coin in your deposit. We've added its resellable worth (${fmt(tx.resale)}) to your balance as a separate credit. Congrats!`);
+}
+this.navigateTo('screen-3');
+},
 
-            elements.viewWalletButton.addEventListener('click', () => {
-                switchScreen(0);
-                resetTransaction();
-            });
+// History
+renderHistory() {
+const list = $('#history-list');
+list.innerHTML = '';
+if (!this.state.history.length) {
+const p = document.createElement('p');
+p.id = 'no-history-message';
+p.className = 'text-center text-gray-500 italic mt-8';
+p.textContent = 'No coin deposits recorded yet. Time to get counting!';
+list.appendChild(p);
+return;
+}
+this.state.history.forEach(tx => {
+const item = document.createElement('button');
+item.className = 'w-full text-left p-4 rounded-xl border hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500';
+const netSign = tx.net >= 0 ? '' : '-';
+item.innerHTML = `
+<div class="flex justify-between items-center">
+<div>
+<div class="font-semibold text-gray-900">${fmt(tx.net)}</div>
+<div class="text-xs text-gray-500">${new Date(tx.timestamp).toLocaleString()} • ${tx.id}</div>
+</div>
+<div class="text-right text-sm text-gray-600">
+Gross ${fmt(tx.gross)}<br/>
+Fee -${fmt(tx.fee)}${tx.resale ? `<br/>Resale +${fmt(tx.resale)}`: ''}
+</div>
+</div>`;
+item.addEventListener('click', () => {
+this.showToast(`TX ${tx.id}: Net ${fmt(tx.net)}`);
+});
+list.appendChild(item);
+});
+},
 
-            elements.backButton.addEventListener('click', () => {
-                if (appState.currentScreen === 5 || appState.currentScreen === 4 || appState.currentScreen === 1) {
-                    switchScreen(0);
-                } else if (appState.currentScreen === 2) {
-                    stopCoinCounting();
-                    resetTransaction();
-                    switchScreen(1);
-                } else if (appState.currentScreen === 3) {
-                    // From receipt back to home
-                    switchScreen(0); 
-                }
-            });
+clearHistory() {
+if (!this.state.history.length) return this.showToast('No history to clear');
+if (!confirm('Clear all transactions?')) return;
+this.state.history = [];
+storage.set('koin.history', this.state.history);
+this.renderHistory();
+this.showToast('History cleared');
+},
 
-            // AI Chat listeners
-            elements.helpButton.addEventListener('click', () => elements.aiChatModal.classList.add('visible'));
-            elements.closeChatButton.addEventListener('click', () => elements.aiChatModal.classList.remove('visible'));
+// Chat
+openChat() { this.toggleModal('#ai-chat-modal', true, '#chat-input'); this.probeAI(); },
+closeChat() { this.toggleModal('#ai-chat-modal', false); },
+async sendChatMessage() {
+const input = $('#chat-input');
+const text = input.value.trim(); if (!text) return;
+this.appendChat('user', text);
+input.value = '';
+try {
+const reply = await this.tryAI(text);
+this.appendChat('ai', reply);
+} catch (e) {
+const statusEl = document.getElementById('ai-status');
+if (statusEl) statusEl.textContent = 'AI: Offline (fallback)';
+this.appendChat('ai', this.replyFor(text));
+}
+},
+appendChat(role, text) {
+const box = $('#chat-messages');
+const div = document.createElement('div');
+div.className = 'chat-message ' + (role === 'user' ? 'user' : 'ai');
+div.textContent = text;
+box.appendChild(div);
+box.scrollTop = box.scrollHeight;
+},
+async tryAI(text) {
+const endpoint = storage.get('koin.aiEndpoint', '/api/chat');
+const apiKey = storage.get('koin.aiKey', '');
+const messages = [
+{ role: 'system', content: 'You are Koin assistant. Be concise and helpful.' },
+{ role: 'user', content: text }
+];
+const isLocal = endpoint.startsWith('/') || endpoint.startsWith(window.location.origin);
+if (isLocal) {
+const res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'gpt-4o-mini', messages }) });
+const errText = await (res.ok ? Promise.resolve('') : res.text().catch(()=>''));
+if (!res.ok) throw new Error(errText || 'bad-resp');
+const json = await res.json();
+if (json.reply) return String(json.reply);
+const reply = json.choices?.[0]?.message?.content?.trim();
+if (reply) return reply;
+throw new Error('no-reply');
+} else {
+if (!apiKey) throw new Error('no-key');
+const body = { model: 'gpt-4o-mini', messages, temperature: 0.5, max_tokens: 180 };
+const res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` }, body: JSON.stringify(body) });
+if (!res.ok) throw new Error(await res.text());
+const json = await res.json();
+const reply = json.choices?.[0]?.message?.content?.trim();
+if (!reply) throw new Error('no-reply');
+return reply;
+}
+// If we reached here without throwing, mark AI online
+this.state.aiOnline = true; const statusEl = document.getElementById('ai-status'); if (statusEl) statusEl.textContent = 'AI: Connected';
+},
+replyFor(text) {
+const kb = [
+{ q: 'fees free plan', a: `Free plan fee is 5% per deposit.` },
+{ q: 'fees premium plan', a: `Premium plan fee is 2% per deposit.` },
+{ q: 'find kiosk scan', a: 'Open Find Kiosks, then Scan QR to pair and start deposit.' },
+{ q: 'where card view', a: 'Open View Card on home; use Copy to copy details.' },
+{ q: 'see history export', a: 'Open Transaction History. Use Export CSV to download.' },
+{ q: 'upgrade premium buy', a: 'Open Subscription, choose Premium, then confirm in checkout.' }
+];
+const score = (s1, s2) => {
+const v = (s) => s.toLowerCase().replace(/[^a-z0-9\s]/g,'').split(/\s+/).filter(Boolean);
+const a = v(s1), b = v(s2);
+const set = (arr) => arr.reduce((m,w)=> (m[w]=(m[w]||0)+1, m), {});
+const A = set(a), B = set(b);
+const all = new Set([...Object.keys(A), ...Object.keys(B)]);
+let dot=0, na=0, nb=0;
+all.forEach(k=>{ const x=A[k]||0, y=B[k]||0; dot+=x*y; na+=x*x; nb+=y*y; });
+return dot / (Math.sqrt(na||1)*Math.sqrt(nb||1));
+};
+const best = kb.map(item => ({ item, s: score(text, item.q) })).sort((x,y)=>y.s-x.s)[0];
+if (best && best.s > 0.12) return best.item.a + ` (Current fee: ${this.state.feePercent}% on ${this.state.subscription})`;
+return `On ${this.state.subscription} plan your fee is ${this.state.feePercent}%. Try asking about fees, kiosks, card, premium, or history.`;
+},
+saveAI() {
+const ep = $('#ai-endpoint-input')?.value.trim();
+const key = $('#ai-key-input')?.value.trim();
+if (ep) storage.set('koin.aiEndpoint', ep);
+if (typeof key === 'string') storage.set('koin.aiKey', key);
+this.showToast('AI settings saved');
+},
 
-            const sendChatMessage = () => {
-                const message = elements.chatInput.value.trim();
-                if (message) {
-                    handleChatMessage(message);
-                    elements.chatInput.value = '';
-                }
-            };
+async probeAI() {
+const endpoint = storage.get('koin.aiEndpoint', '/api/chat');
+const statusEl = document.getElementById('ai-status');
+const welcome = document.getElementById('chat-welcome');
+let finished = false;
+const finish = (ok) => {
+this.state.aiOnline = !!ok;
+if (statusEl) statusEl.textContent = ok ? 'AI: Connected' : 'AI: Offline (fallback)';
+if (welcome && !ok) welcome.textContent = 'Hi — I’m Koin Assistant (offline mode). I can still help with common questions.';
+finished = true;
+};
+try {
+if (endpoint.startsWith('/')) {
+const r = await fetch('/api/health?ts=' + Date.now(), { cache: 'no-store' });
+finish(r.ok);
+} else {
+// For direct endpoints, assume online; the first request will confirm
+finish(true);
+}
+} catch (e) {
+finish(false);
+}
+// Safety timeout in case nothing resolves
+setTimeout(() => { if (!finished) finish(false); }, 2500);
+},
 
-            elements.chatSendButton.addEventListener('click', sendChatMessage);
-            elements.chatInput.addEventListener('keypress', (event) => {
-                if (event.key === 'Enter') {
-                    sendChatMessage();
-                }
-            });
+// Subscription
+openSubscription() {
+const modal = $('#subscription-modal');
+modal.querySelector(`input[name="plan"][value="${this.state.subscription}"]`).checked = true;
+this.toggleModal('#subscription-modal', true);
+},
+closeSubscription() { this.toggleModal('#subscription-modal', false); },
+savePlan() {
+const selected = document.querySelector('input[name="plan"]:checked');
+if (!selected) return this.closeSubscription();
+const current = this.state.subscription;
+const want = selected.value;
+const premiumActive = storage.get('koin.premiumActive', false) === true;
+if (want === 'premium' && current !== 'premium' && !premiumActive) {
+this.openCheckout();
+return;
+}
+if (want === 'free' && current === 'premium') {
+if (!confirm('Downgrade to Free now? You will lose premium benefits immediately.')) return;
+storage.set('koin.premiumActive', false);
+}
+this.state.subscription = want;
+this.state.feePercent = want === 'premium' ? 2 : 5;
+storage.set('koin.subscription', this.state.subscription);
+this.updateSubscriptionUI();
+this.closeSubscription();
+this.showToast(`Plan set to ${this.state.subscription}. Fees are ${this.state.feePercent}%`);
+},
+openCheckout() { this.toggleModal('#checkout-modal', true, '#confirm-purchase-button'); },
+closeCheckout() { this.toggleModal('#checkout-modal', false); },
+confirmPurchase() {
+storage.set('koin.premiumActive', true);
+storage.set('koin.premiumReceipt', { id: 'PM-' + uid().toUpperCase(), ts: nowIso(), price: 299 });
+this.state.subscription = 'premium';
+this.state.feePercent = 2;
+storage.set('koin.subscription', 'premium');
+this.updateSubscriptionUI();
+this.closeCheckout();
+this.closeSubscription();
+this.showToast('Premium activated');
+},
+updateSubscriptionUI() {
+$('#subscription-status-button').textContent = this.state.subscription === 'premium' ? 'Premium' : 'Free Tier';
+},
 
-            // Subscription listeners
-            elements.subscriptionStatusButton.addEventListener('click', () => elements.subscriptionModal.classList.add('visible'));
-            elements.closeSubscriptionModalButton.addEventListener('click', () => elements.subscriptionModal.classList.remove('visible'));
+// Card
+async copyCard() {
+const details = `KOIN 4242 •••• •••• 0001 | CVV 123 | EXP 12/28 | HOLDER JANE DOE`;
+try {
+await navigator.clipboard.writeText(details);
+this.showToast('Card copied to clipboard');
+} catch {
+// Fallback
+const ta = document.createElement('textarea');
+ta.value = details; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+this.showToast('Card copied (fallback)');
+}
+},
 
-            elements.freeTierButton.addEventListener('click', () => {
-                if (appState.subscriptionStatus === 'Premium Tier') {
-                    // ADDED: Record Subscription Downgrade Transaction
-                    const freeTx = {
-                        id: Math.random().toString(36).substring(2, 11).toUpperCase(),
-                        timestamp: new Date().toISOString(),
-                        gross: 0,
-                        fee: 0,
-                        net: 0,
-                        type: 'Subscription Downgrade',
-                        subscription: 'Free Tier',
-                        bonus: 0,
-                        rareCoinName: null
-                    };
-                    appState.history.unshift(freeTx);
-                    
-                    appState.subscriptionStatus = 'Free Tier';
-                    elements.subscriptionModal.classList.remove('visible');
-                    updateWalletUI();
-                    showMessage("Subscription updated to Free Tier (5% fee).", 'success');
-                }
-            });
-            elements.premiumTierButton.addEventListener('click', handlePremiumPayment);
-        };
+// Modal helper with simple focus trap
+toggleModal(selector, open, focusSel) {
+const modal = document.querySelector(selector);
+if (!modal) return;
+if (open) {
+modal.classList.add('visible');
+modal.setAttribute('aria-hidden', 'false');
+this._lastFocus = document.activeElement;
+const toFocus = focusSel ? document.querySelector(focusSel) : modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+if (toFocus) setTimeout(() => toFocus.focus(), 10);
+const focusables = Array.from(modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'));
+const first = focusables[0]; const last = focusables[focusables.length-1];
+modal._trap = (e) => {
+if (e.key !== 'Tab') return;
+if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+};
+modal.addEventListener('keydown', modal._trap);
+} else {
+modal.classList.remove('visible');
+modal.setAttribute('aria-hidden', 'true');
+if (modal._trap) modal.removeEventListener('keydown', modal._trap);
+if (this._lastFocus) this._lastFocus.focus();
+}
+},
 
-        // --- Initialization ---
-        document.addEventListener('DOMContentLoaded', () => {
-            setupEventListeners();
-            updateWalletUI(); // Initialize wallet display and fee rate on load
-            switchScreen(0); // Start on the wallet home screen
-        });
-        
-        return { showMessage };
-    })();
+showToast(msg) {
+const t = $('#toast');
+t.textContent = msg; t.classList.add('show');
+clearTimeout(this._toastTimer);
+this._toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+},
+
+// Settings
+openSettings() { this.toggleModal('#settings-modal', true, '#holder-input'); $('#holder-input').value = storage.get('koin.holder', 'JANE DOE'); },
+closeSettings() { this.toggleModal('#settings-modal', false); },
+saveHolder() { const v = $('#holder-input').value.trim(); if (!v) return this.showToast('Enter a name'); storage.set('koin.holder', v); $('#card-holder').textContent = v; this.showToast('Card holder updated'); },
+resetApp() {
+if (!confirm('Reset wallet, history, and settings?')) return;
+['koin.subscription','koin.walletBalance','koin.history','koin.holder'].forEach(k => localStorage.removeItem(k));
+this.state = { screen: 'screen-0', backStack: [], subscription: 'free', feePercent: 5, walletCents: 0, pending: null, history: [] };
+this.updateSubscriptionUI(); this.updateBalanceUI(); this.renderHistory();
+$('#card-holder').textContent = 'JANE DOE';
+this.showToast('App reset');
+this.closeSettings();
+},
+};
+
+// Initialize
+window.addEventListener('DOMContentLoaded', () => {
+const params = new URLSearchParams(location.search);
+if (params.has('nosw') && 'serviceWorker' in navigator) {
+navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister())).catch(()=>{});
+if (window.caches) ['koin-cache-v1','koin-cache-v2','koin-cache-v3'].forEach(n => caches.delete(n).catch(()=>{}));
+}
+KoinApp.init();
+if ('serviceWorker' in navigator) {
+if (!params.has('nosw')) navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+}
+});
 </script>
 </body>
 </html>
